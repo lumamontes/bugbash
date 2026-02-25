@@ -1,0 +1,268 @@
+---
+import AppLayout from '../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Card from '@components/ui/Card.astro';
+import Badge from '@components/ui/Badge.astro';
+import InviteManager from '@components/InviteManager';
+import { db } from '@db/index';
+import { organizations, squads, users, tags } from '@db/schema';
+import { eq } from 'drizzle-orm';
+
+const user = Astro.locals.user!;
+const orgId = user.orgId;
+
+// Organization
+const org = db.select().from(organizations).where(eq(organizations.id, orgId)).get()!;
+
+// Squads
+const orgSquads = db.select().from(squads).where(eq(squads.orgId, orgId)).all();
+
+// Users
+const orgUsers = db
+  .select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    role: users.role,
+    squadId: users.squadId,
+    squadName: squads.name,
+  })
+  .from(users)
+  .leftJoin(squads, eq(users.squadId, squads.id))
+  .where(eq(users.orgId, orgId))
+  .all();
+
+// Tags
+const orgTags = db.select().from(tags).where(eq(tags.orgId, orgId)).all();
+
+const roleLabel: Record<string, string> = {
+  admin: 'Admin',
+  facilitator: 'Facilitador',
+  participant: 'Participante',
+};
+---
+
+<AppLayout title="Configurações — Bug Bash">
+  <div class="p-8 max-w-5xl">
+    <PageHeader title="Configurações" description="Gerencie sua organização, squads, usuários e tags." />
+
+    <!-- Organization -->
+    <Card class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Organização</h2>
+      </div>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-text-muted text-xs font-medium mb-1">Nome</p>
+          <p class="text-text-primary">{org.name}</p>
+        </div>
+        <div>
+          <p class="text-text-muted text-xs font-medium mb-1">Slug</p>
+          <p class="text-text-primary font-mono text-xs">{org.slug}</p>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Squads -->
+    <Card class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Squads ({orgSquads.length})</h2>
+        <button
+          type="button"
+          onclick="document.getElementById('add-squad-form')?.classList.toggle('hidden')"
+          class="text-sm px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+        >
+          Nova Squad
+        </button>
+      </div>
+
+      <form id="add-squad-form" method="POST" action="/api/settings/squads" class="hidden mb-4 flex gap-2">
+        <input
+          type="text"
+          name="name"
+          placeholder="Nome da squad"
+          required
+          class="flex-1 px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-600"
+        />
+        <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+          Criar
+        </button>
+      </form>
+
+      {orgSquads.length === 0 ? (
+        <p class="text-text-muted text-sm text-center py-4">Nenhuma squad cadastrada.</p>
+      ) : (
+        <div class="space-y-2">
+          {orgSquads.map(sq => {
+            const memberCount = orgUsers.filter(u => u.squadId === sq.id).length;
+            return (
+              <div class="flex items-center justify-between p-3 rounded-lg bg-surface-2">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm text-text-primary font-medium">{sq.name}</span>
+                  <span class="text-xs text-text-muted">{memberCount} membro{memberCount !== 1 ? 's' : ''}</span>
+                </div>
+                <form method="POST" action="/api/settings/squads">
+                  <input type="hidden" name="_method" value="DELETE" />
+                  <input type="hidden" name="squadId" value={sq.id} />
+                  <button type="submit" class="text-xs text-text-muted hover:text-red-400 transition-colors">Remover</button>
+                </form>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
+
+    <!-- Users -->
+    <Card class="mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Usuários ({orgUsers.length})</h2>
+        <button
+          type="button"
+          onclick="document.getElementById('add-user-form')?.classList.toggle('hidden')"
+          class="text-sm px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+        >
+          Novo Usuário
+        </button>
+      </div>
+
+      <form id="add-user-form" method="POST" action="/api/settings/users" class="hidden mb-4 space-y-3 p-4 rounded-lg bg-surface-2">
+        <div class="grid grid-cols-2 gap-3">
+          <input
+            type="text"
+            name="name"
+            placeholder="Nome completo"
+            required
+            class="px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-600"
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            required
+            class="px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-600"
+          />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <select
+            name="role"
+            class="px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600"
+          >
+            <option value="participant">Participante</option>
+            <option value="facilitator">Facilitador</option>
+            <option value="admin">Admin</option>
+          </select>
+          <select
+            name="squadId"
+            class="px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-600"
+          >
+            <option value="">Sem squad</option>
+            {orgSquads.map(sq => (
+              <option value={sq.id}>{sq.name}</option>
+            ))}
+          </select>
+        </div>
+        <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+          Criar Usuário
+        </button>
+      </form>
+
+      {orgUsers.length === 0 ? (
+        <p class="text-text-muted text-sm text-center py-4">Nenhum usuário cadastrado.</p>
+      ) : (
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-surface-3">
+                <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Nome</th>
+                <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Email</th>
+                <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Papel</th>
+                <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Squad</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orgUsers.map(u => (
+                <tr class="border-b border-surface-3 last:border-0">
+                  <td class="px-3 py-2 text-text-primary">{u.name}</td>
+                  <td class="px-3 py-2 text-text-secondary">{u.email}</td>
+                  <td class="px-3 py-2">
+                    <span class:list={[
+                      'text-xs px-2 py-0.5 rounded font-medium',
+                      u.role === 'admin' ? 'bg-purple-500/20 text-purple-400' :
+                      u.role === 'facilitator' ? 'bg-blue-500/20 text-blue-400' :
+                      'bg-surface-3 text-text-secondary',
+                    ]}>
+                      {roleLabel[u.role] ?? u.role}
+                    </span>
+                  </td>
+                  <td class="px-3 py-2 text-text-secondary">{u.squadName ?? '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+
+    <!-- Invite Links -->
+    {(user.role === 'admin' || user.role === 'facilitator') && (
+      <Card class="mb-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text-primary">Links de Convite</h2>
+        </div>
+        <InviteManager client:load />
+      </Card>
+    )}
+
+    <!-- Tags -->
+    <Card>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Tags ({orgTags.length})</h2>
+        <button
+          type="button"
+          onclick="document.getElementById('add-tag-form')?.classList.toggle('hidden')"
+          class="text-sm px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+        >
+          Nova Tag
+        </button>
+      </div>
+
+      <form id="add-tag-form" method="POST" action="/api/settings/tags" class="hidden mb-4 flex gap-2">
+        <input
+          type="text"
+          name="name"
+          placeholder="Nome da tag"
+          required
+          class="flex-1 px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-600"
+        />
+        <input
+          type="color"
+          name="color"
+          value="#6366f1"
+          class="w-10 h-9 rounded border border-surface-3 bg-surface-0 cursor-pointer"
+        />
+        <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded-lg transition-colors">
+          Criar
+        </button>
+      </form>
+
+      {orgTags.length === 0 ? (
+        <p class="text-text-muted text-sm text-center py-4">Nenhuma tag cadastrada.</p>
+      ) : (
+        <div class="flex flex-wrap gap-2">
+          {orgTags.map(tag => (
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-2">
+              <span class="w-3 h-3 rounded-full" style={`background-color: ${tag.color}`} />
+              <span class="text-sm text-text-primary">{tag.name}</span>
+              <form method="POST" action="/api/settings/tags" class="inline">
+                <input type="hidden" name="_method" value="DELETE" />
+                <input type="hidden" name="tagId" value={tag.id} />
+                <button type="submit" class="text-text-muted hover:text-red-400 text-xs ml-1 transition-colors">&times;</button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  </div>
+</AppLayout>

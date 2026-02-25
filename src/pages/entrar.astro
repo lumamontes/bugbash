@@ -1,0 +1,33 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EmailLogin from '@components/EmailLogin';
+
+const error = Astro.url.searchParams.get('error');
+
+const errorMessages: Record<string, string> = {
+  invalid_credentials: 'Usuário não encontrado.',
+  missing_fields: 'Por favor, informe seu email.',
+  invite_invalid: 'Convite inválido ou expirado.',
+};
+
+const errorMessage = error ? errorMessages[error] ?? 'Erro desconhecido.' : null;
+---
+
+<Layout title="Entrar — Bug Bash">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-sm">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-bold text-text-primary">Bug Bash</h1>
+        <p class="text-sm text-text-secondary mt-2">Entre com seu email</p>
+      </div>
+
+      {errorMessage && (
+        <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-4 py-3 mb-4">
+          {errorMessage}
+        </div>
+      )}
+
+      <EmailLogin client:load />
+    </div>
+  </div>
+</Layout>

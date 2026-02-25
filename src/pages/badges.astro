@@ -1,0 +1,120 @@
+---
+import AppLayout from '../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import BadgeCard from '@components/BadgeCard';
+import { db } from '@db/index';
+import { badgeDefinitions, userBadges, bugs, sessionParticipants } from '@db/schema';
+import { eq, and, count, sql } from 'drizzle-orm';
+
+const user = Astro.locals.user!;
+
+// Get all badges
+const allBadges = db.select().from(badgeDefinitions).orderBy(badgeDefinitions.category, badgeDefinitions.tier).all();
+
+// Get user's earned badges
+const earned = db
+  .select({
+    badgeId: userBadges.badgeId,
+    earnedAt: userBadges.earnedAt,
+  })
+  .from(userBadges)
+  .where(eq(userBadges.userId, user.id))
+  .all();
+
+const earnedMap = new Map(earned.map(e => [e.badgeId, e.earnedAt]));
+
+// Compute progress for threshold badges
+const totalBugs = db.select({ count: count() }).from(bugs).where(eq(bugs.reportedBy, user.id)).get()!.count;
+const highQualityBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), sql`${bugs.qualityScore} >= 80`)).get()!.count;
+const totalParticipations = db.select({ count: count() }).from(sessionParticipants).where(eq(sessionParticipants.userId, user.id)).get()!.count;
+const blockerBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.severity, 'blocker'))).get()!.count;
+const duplicateBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.status, 'duplicate'))).get()!.count;
+
+function getProgress(slug: string): number {
+  switch (slug) {
+    case 'bug-hunter': return Math.min(totalBugs, 5);
+    case 'bug-slayer': return Math.min(totalBugs, 20);
+    case 'bug-legend': return Math.min(totalBugs, 50);
+    case 'quality-star': return Math.min(highQualityBugs, 1);
+    case 'perfectionist': return Math.min(highQualityBugs, 5);
+    case 'eagle-eye': return Math.min(blockerBugs, 1);
+    case 'duplicate-detective': return Math.min(duplicateBugs, 3);
+    case 'team-player': return Math.min(totalParticipations, 5);
+    case 'veteran': return Math.min(totalParticipations, 10);
+    case 'streak-3': return Math.min(totalParticipations, 3);
+    case 'streak-5': return Math.min(totalParticipations, 5);
+    default: return 0;
+  }
+}
+
+const categoryLabels: Record<string, string> = {
+  bugs: 'Bugs Reportados',
+  quality: 'Qualidade',
+  collaboration: 'Colaboração',
+  streaks: 'Sequências',
+  special: 'Especiais',
+};
+
+const categories = ['bugs', 'quality', 'collaboration', 'streaks', 'special'];
+
+const badgesByCategory = categories.map(cat => ({
+  category: cat,
+  label: categoryLabels[cat] || cat,
+  badges: allBadges
+    .filter(b => b.category === cat)
+    .map(b => ({
+      slug: b.slug,
+      name: b.name,
+      description: b.description,
+      icon: b.icon,
+      tier: b.tier,
+      category: b.category,
+      threshold: b.threshold,
+      earned: earnedMap.has(b.id),
+      earnedAt: earnedMap.get(b.id)?.toISOString(),
+      progress: getProgress(b.slug),
+    })),
+})).filter(c => c.badges.length > 0);
+
+const totalEarned = earned.length;
+const totalAvailable = allBadges.length;
+---
+
+<AppLayout title="Conquistas — Bug Bash">
+  <div class="p-8">
+    <PageHeader title="Conquistas" description="Suas medalhas e progresso nas sessões de bug bash." />
+
+    <!-- Summary -->
+    <div class="mb-8 flex items-center gap-6">
+      <div class="bg-surface-1 border border-surface-3 rounded-xl px-6 py-4">
+        <p class="text-text-muted text-xs font-medium">Conquistadas</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{totalEarned} <span class="text-text-muted text-sm font-normal">/ {totalAvailable}</span></p>
+      </div>
+      <div class="flex-1 h-3 bg-surface-2 rounded-full overflow-hidden">
+        <div
+          class="h-full bg-gradient-to-r from-primary-600 to-primary-400 rounded-full transition-all"
+          style={`width: ${totalAvailable > 0 ? (totalEarned / totalAvailable) * 100 : 0}%`}
+        />
+      </div>
+    </div>
+
+    <!-- Badge Categories -->
+    {badgesByCategory.map(cat => (
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-text-primary mb-4">{cat.label}</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {cat.badges.map(badge => (
+            <BadgeCard badge={badge} />
+          ))}
+        </div>
+      </div>
+    ))}
+
+    {badgesByCategory.length === 0 && (
+      <div class="text-center py-12 text-text-muted">
+        <p class="text-lg">Nenhuma conquista disponível ainda.</p>
+        <p class="text-sm mt-2">Execute o seed do banco de dados para criar as definições de conquistas.</p>
+      </div>
+    )}
+  </div>
+</AppLayout>

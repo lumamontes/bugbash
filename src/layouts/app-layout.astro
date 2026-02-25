@@ -1,0 +1,89 @@
+---
+import Layout from './Layout.astro';
+
+interface Props {
+  title?: string;
+}
+
+const { title = "Bug Bash" } = Astro.props;
+
+const user = Astro.locals.user;
+const initials = user?.name
+  ?.split(' ')
+  .map((n: string) => n[0])
+  .slice(0, 2)
+  .join('')
+  .toUpperCase() ?? '?';
+
+const currentPath = Astro.url.pathname;
+
+const isParticipant = user?.role === 'participant';
+
+const allNavItems = [
+  { href: '/', label: 'Painel', icon: 'grid' },
+  { href: '/sessions', label: 'Sessões', icon: 'play-circle' },
+  { href: '/analytics', label: 'Analytics', icon: 'bar-chart' },
+  { href: '/badges', label: 'Conquistas', icon: 'award' },
+  { href: '/guide', label: 'Guia', icon: 'book' },
+  { href: '/settings', label: 'Config.', icon: 'settings' },
+];
+
+const navItems = isParticipant
+  ? allNavItems.filter(item => ['/sessions', '/badges'].includes(item.href))
+  : allNavItems;
+---
+
+<Layout title={title}>
+  <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
+    <aside class="w-60 flex-shrink-0 bg-surface-1 border-r border-surface-3 flex flex-col">
+      <!-- Logo -->
+      <div class="h-14 flex items-center px-5 border-b border-surface-3">
+        <span class="text-lg font-semibold text-text-primary tracking-tight">Bug Bash</span>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 py-3 px-3 space-y-1">
+        {navItems.map(item => (
+          <a
+            href={item.href}
+            class:list={[
+              'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              item.href === '/' ? currentPath === '/' : currentPath.startsWith(item.href)
+                ? 'bg-primary-600/20 text-primary-400'
+                : 'text-text-secondary hover:text-text-primary hover:bg-surface-2',
+            ]}
+          >
+            {item.label}
+          </a>
+        ))}
+      </nav>
+
+      <!-- User section -->
+      <div class="border-t border-surface-3 p-3">
+        <div class="flex items-center gap-3 px-2 py-2">
+          <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center text-xs font-semibold text-white flex-shrink-0">
+            {initials}
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-text-primary truncate">{user?.name}</p>
+            <p class="text-xs text-text-muted truncate">{user?.email}</p>
+          </div>
+        </div>
+        <form method="POST" action="/api/auth/logout" class="mt-2">
+          <button
+            type="submit"
+            class="w-full text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface-2 rounded-lg transition-colors"
+          >
+            Sair
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 overflow-auto">
+      <slot />
+    </main>
+  </div>
+</Layout>

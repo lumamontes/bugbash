@@ -1,0 +1,135 @@
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+interface SeverityData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface ReporterData {
+  name: string;
+  count: number;
+}
+
+interface Props {
+  severityData: SeverityData[];
+  reporterData: ReporterData[];
+  statusData: SeverityData[];
+}
+
+export default function ReportCharts({ severityData, reporterData, statusData }: Props) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Severity Pie */}
+      <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Severidade</h3>
+        {severityData.length === 0 ? (
+          <p className="text-[#64748b] text-sm text-center py-8">Sem dados</p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <ResponsiveContainer width="50%" height={160}>
+              <PieChart>
+                <Pie
+                  data={severityData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  innerRadius={35}
+                  paddingAngle={2}
+                >
+                  {severityData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #242430', borderRadius: '8px', fontSize: '12px' }}
+                  itemStyle={{ color: '#f1f5f9' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2">
+              {severityData.map(d => (
+                <div key={d.name} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs text-[#94a3b8]">{d.name}</span>
+                  <span className="text-xs font-bold text-[#f1f5f9]">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Status Pie */}
+      <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
+        <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Status</h3>
+        {statusData.length === 0 ? (
+          <p className="text-[#64748b] text-sm text-center py-8">Sem dados</p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <ResponsiveContainer width="50%" height={160}>
+              <PieChart>
+                <Pie
+                  data={statusData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={60}
+                  innerRadius={35}
+                  paddingAngle={2}
+                >
+                  {statusData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #242430', borderRadius: '8px', fontSize: '12px' }}
+                  itemStyle={{ color: '#f1f5f9' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="space-y-2">
+              {statusData.map(d => (
+                <div key={d.name} className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs text-[#94a3b8]">{d.name}</span>
+                  <span className="text-xs font-bold text-[#f1f5f9]">{d.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Reporter Bar Chart */}
+      <div className="bg-[#111118] border border-[#242430] rounded-xl p-6 md:col-span-2">
+        <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Bugs por Participante</h3>
+        {reporterData.length === 0 ? (
+          <p className="text-[#64748b] text-sm text-center py-8">Sem dados</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={reporterData} layout="vertical" margin={{ left: 0, right: 20 }}>
+              <XAxis type="number" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis
+                type="category"
+                dataKey="name"
+                tick={{ fill: '#94a3b8', fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                width={120}
+              />
+              <Tooltip
+                contentStyle={{ backgroundColor: '#1a1a24', border: '1px solid #242430', borderRadius: '8px', fontSize: '12px' }}
+                itemStyle={{ color: '#f1f5f9' }}
+              />
+              <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} name="Bugs" />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,237 @@
+---
+import AppLayout from '../../../../layouts/app-layout.astro';
+import Badge from '@components/ui/Badge.astro';
+import Card from '@components/ui/Card.astro';
+import BugStatusSelect from '@components/BugStatusSelect';
+import EvidenceGallery from '@components/EvidenceGallery';
+import LinearExportModal from '@components/LinearExportModal';
+import { db } from '@db/index';
+import { sessions, bugs, bugComments, bugTags, bugEvidence, tags, users, testSteps, testScripts } from '@db/schema';
+import { eq } from 'drizzle-orm';
+import { bugSeverityLabel, bugStatusLabel, bugTypeLabel, formatDateTime } from '@lib/format';
+
+const user = Astro.locals.user!;
+const { id, bugId } = Astro.params;
+
+const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
+if (!session || session.orgId !== user.orgId) {
+  return Astro.redirect('/sessions');
+}
+
+const bug = db
+  .select({
+    id: bugs.id,
+    title: bugs.title,
+    description: bugs.description,
+    stepsToReproduce: bugs.stepsToReproduce,
+    severity: bugs.severity,
+    type: bugs.type,
+    status: bugs.status,
+    qualityScore: bugs.qualityScore,
+    reportedVia: bugs.reportedVia,
+    testStepId: bugs.testStepId,
+    linearIssueId: bugs.linearIssueId,
+    linearIssueUrl: bugs.linearIssueUrl,
+    createdAt: bugs.createdAt,
+    updatedAt: bugs.updatedAt,
+    reporterName: users.name,
+  })
+  .from(bugs)
+  .innerJoin(users, eq(bugs.reportedBy, users.id))
+  .where(eq(bugs.id, bugId!))
+  .get();
+
+if (!bug) {
+  return Astro.redirect(`/sessions/${id}`);
+}
+
+// Tags for this bug
+const bugTagsList = db
+  .select({ id: tags.id, name: tags.name, color: tags.color })
+  .from(bugTags)
+  .innerJoin(tags, eq(bugTags.tagId, tags.id))
+  .where(eq(bugTags.bugId, bugId!))
+  .all();
+
+// Evidence for this bug
+const evidenceList = db
+  .select({
+    id: bugEvidence.id,
+    type: bugEvidence.type,
+    url: bugEvidence.url,
+    filename: bugEvidence.filename,
+  })
+  .from(bugEvidence)
+  .where(eq(bugEvidence.bugId, bugId!))
+  .all();
+
+// Linked test step
+let linkedStep: { instruction: string; scriptTitle: string } | null = null;
+if (bug.testStepId) {
+  const step = db
+    .select({ instruction: testSteps.instruction, scriptId: testSteps.scriptId })
+    .from(testSteps)
+    .where(eq(testSteps.id, bug.testStepId))
+    .get();
+  if (step) {
+    const script = db.select({ title: testScripts.title }).from(testScripts).where(eq(testScripts.id, step.scriptId)).get();
+    linkedStep = { instruction: step.instruction, scriptTitle: script?.title || '' };
+  }
+}
+
+const isFacilitator = user.role === 'admin' || user.role === 'facilitator';
+
+// Comments
+const comments = db
+  .select({
+    id: bugComments.id,
+    content: bugComments.content,
+    createdAt: bugComments.createdAt,
+    userName: users.name,
+  })
+  .from(bugComments)
+  .innerJoin(users, eq(bugComments.userId, users.id))
+  .where(eq(bugComments.bugId, bugId!))
+  .orderBy(bugComments.createdAt)
+  .all();
+---
+
+<AppLayout title={`${bug.title} — Bug Bash`}>
+  <div class="p-8 max-w-3xl">
+    <!-- Back link -->
+    <div class="mb-6">
+      <a href={`/sessions/${id}`} class="text-text-muted hover:text-text-primary text-sm">&larr; Voltar para sessão</a>
+    </div>
+
+    <!-- Header -->
+    <div class="flex items-start justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-text-primary mb-3">{bug.title}</h1>
+        <div class="flex items-center gap-2 flex-wrap">
+          <Badge variant="bug-severity" value={bug.severity}>{bugSeverityLabel(bug.severity)}</Badge>
+          <Badge variant="bug-status" value={bug.status}>{bugStatusLabel(bug.status)}</Badge>
+          <Badge>{bugTypeLabel(bug.type)}</Badge>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <LinearExportModal
+          sessionId={id!}
+          bugId={bugId!}
+          bugTitle={bug.title}
+          linearIssueId={bug.linearIssueId}
+          linearIssueUrl={bug.linearIssueUrl}
+          client:load
+        />
+        <BugStatusSelect sessionId={id!} bugId={bugId!} currentStatus={bug.status} client:load />
+      </div>
+    </div>
+
+    <!-- Meta -->
+    <Card class="mb-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div>
+          <p class="text-text-muted text-xs">Reportado por</p>
+          <p class="text-text-primary font-medium">{bug.reporterName}</p>
+        </div>
+        <div>
+          <p class="text-text-muted text-xs">Data</p>
+          <p class="text-text-secondary">{formatDateTime(bug.createdAt)}</p>
+        </div>
+        <div>
+          <p class="text-text-muted text-xs">Via</p>
+          <p class="text-text-secondary">{bug.reportedVia === 'widget' ? 'Widget' : 'Plataforma'}</p>
+        </div>
+        {isFacilitator && bug.qualityScore !== null && (
+          <div>
+            <p class="text-text-muted text-xs">Quality Score</p>
+            <p class="text-text-secondary">{bug.qualityScore?.toFixed(1)}</p>
+          </div>
+        )}
+      </div>
+    </Card>
+
+    <!-- Description -->
+    {bug.description && (
+      <Card class="mb-6">
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Descrição</h2>
+        <p class="text-text-secondary text-sm whitespace-pre-wrap">{bug.description}</p>
+      </Card>
+    )}
+
+    <!-- Steps to Reproduce -->
+    {bug.stepsToReproduce && (
+      <Card class="mb-6">
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Passos para Reproduzir</h2>
+        <p class="text-text-secondary text-sm whitespace-pre-wrap">{bug.stepsToReproduce}</p>
+      </Card>
+    )}
+
+    <!-- Evidence -->
+    {evidenceList.length > 0 && (
+      <Card class="mb-6">
+        <h2 class="text-sm font-semibold text-text-primary mb-3">Evidências ({evidenceList.length})</h2>
+        <EvidenceGallery
+          items={evidenceList}
+          bugTitle={bug.title}
+          severity={bug.severity}
+          reporterName={bug.reporterName}
+          client:load
+        />
+      </Card>
+    )}
+
+    <!-- Tags -->
+    {bugTagsList.length > 0 && (
+      <Card class="mb-6">
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Tags</h2>
+        <div class="flex flex-wrap gap-2">
+          {bugTagsList.map(tag => (
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style={`background: ${tag.color}20; color: ${tag.color}`}>
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      </Card>
+    )}
+
+    <!-- Linked Test Step -->
+    {linkedStep && (
+      <Card class="mb-6">
+        <h2 class="text-sm font-semibold text-text-primary mb-2">Passo de Teste Relacionado</h2>
+        <p class="text-text-secondary text-sm"><span class="text-text-muted">{linkedStep.scriptTitle}:</span> {linkedStep.instruction}</p>
+      </Card>
+    )}
+
+    <!-- Comments -->
+    <Card>
+      <h2 class="text-sm font-semibold text-text-primary mb-4">Comentários ({comments.length})</h2>
+
+      {comments.length > 0 && (
+        <div class="space-y-4 mb-6">
+          {comments.map(c => (
+            <div class="p-3 rounded-lg bg-surface-2">
+              <div class="flex items-center justify-between mb-1">
+                <p class="text-sm font-medium text-text-primary">{c.userName}</p>
+                <p class="text-xs text-text-muted">{formatDateTime(c.createdAt)}</p>
+              </div>
+              <p class="text-sm text-text-secondary whitespace-pre-wrap">{c.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form method="POST" action={`/api/sessions/${id}/bugs/${bugId}/comments`} class="space-y-3">
+        <textarea
+          name="content"
+          required
+          rows="3"
+          class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none text-sm"
+          placeholder="Adicionar comentário..."
+        ></textarea>
+        <button type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+          Comentar
+        </button>
+      </form>
+    </Card>
+  </div>
+</AppLayout>

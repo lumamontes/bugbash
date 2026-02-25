@@ -1,0 +1,81 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getUserCount } from '@lib/auth';
+
+// If users exist, redirect away
+if (getUserCount() > 0) {
+  return Astro.redirect('/entrar');
+}
+
+const error = Astro.url.searchParams.get('error');
+
+const errorMessages: Record<string, string> = {
+  missing_fields: 'Por favor, preencha todos os campos.',
+  email_invalid: 'Email inválido.',
+};
+
+const errorMessage = error ? errorMessages[error] ?? 'Erro desconhecido.' : null;
+---
+
+<Layout title="Configuração Inicial — Bug Bash">
+  <div class="min-h-screen flex items-center justify-center px-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-text-primary">Bug Bash</h1>
+        <p class="text-sm text-text-secondary mt-2">Configure sua organização para começar</p>
+      </div>
+
+      <form method="POST" action="/api/auth/setup" class="bg-surface-1 rounded-xl border border-surface-3 p-6 space-y-4">
+        {errorMessage && (
+          <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-4 py-3">
+            {errorMessage}
+          </div>
+        )}
+
+        <div>
+          <label for="orgName" class="block text-sm font-medium text-text-secondary mb-1.5">Nome da organização</label>
+          <input
+            type="text"
+            id="orgName"
+            name="orgName"
+            required
+            class="w-full bg-surface-2 border border-surface-3 rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Arcotech"
+          />
+        </div>
+
+        <div>
+          <label for="name" class="block text-sm font-medium text-text-secondary mb-1.5">Seu nome</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            required
+            class="w-full bg-surface-2 border border-surface-3 rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Nome completo"
+          />
+        </div>
+
+        <div>
+          <label for="email" class="block text-sm font-medium text-text-secondary mb-1.5">Seu email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            required
+            autocomplete="email"
+            class="w-full bg-surface-2 border border-surface-3 rounded-lg px-3 py-2 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="seu@email.com"
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-1"
+        >
+          Criar organização e entrar
+        </button>
+      </form>
+    </div>
+  </div>
+</Layout>

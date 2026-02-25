@@ -1,0 +1,80 @@
+---
+import AppLayout from '../../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Badge from '@components/ui/Badge.astro';
+import EmptyState from '@components/ui/EmptyState.astro';
+import { db } from '@db/index';
+import { sessions, sessionParticipants, bugs, users } from '@db/schema';
+import { eq, count, desc, sql } from 'drizzle-orm';
+import { sessionStatusLabel, formatDate } from '@lib/format';
+
+const user = Astro.locals.user!;
+const orgId = user.orgId;
+
+const sessionList = db
+  .select({
+    id: sessions.id,
+    title: sessions.title,
+    status: sessions.status,
+    createdAt: sessions.createdAt,
+    creatorName: users.name,
+    participantsCount: sql<number>`(SELECT COUNT(*) FROM session_participants WHERE session_id = ${sessions.id})`,
+    bugsCount: sql<number>`(SELECT COUNT(*) FROM bugs WHERE session_id = ${sessions.id})`,
+  })
+  .from(sessions)
+  .innerJoin(users, eq(sessions.createdBy, users.id))
+  .where(eq(sessions.orgId, orgId))
+  .orderBy(desc(sessions.createdAt))
+  .all();
+---
+
+<AppLayout title="Sessões — Bug Bash">
+  <div class="p-8">
+    <PageHeader title="Sessões" description="Gerencie suas sessões de bug bash.">
+      {user.role !== 'participant' && (
+        <a slot="actions" href="/sessions/new" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+          Nova Sessão
+        </a>
+      )}
+    </PageHeader>
+
+    {sessionList.length === 0 ? (
+      user.role !== 'participant'
+        ? <EmptyState message="Nenhuma sessão encontrada." ctaLabel="Criar Sessão" ctaHref="/sessions/new" />
+        : <EmptyState message="Nenhuma sessão encontrada." />
+    ) : (
+      <div class="bg-surface-1 border border-surface-3 rounded-xl overflow-hidden">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-surface-3">
+              <th class="text-left px-6 py-3 text-text-muted font-medium">Título</th>
+              <th class="text-left px-6 py-3 text-text-muted font-medium">Status</th>
+              <th class="text-center px-6 py-3 text-text-muted font-medium">Participantes</th>
+              <th class="text-center px-6 py-3 text-text-muted font-medium">Bugs</th>
+              <th class="text-left px-6 py-3 text-text-muted font-medium">Data</th>
+              <th class="text-left px-6 py-3 text-text-muted font-medium">Criador</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sessionList.map(s => (
+              <tr class="border-b border-surface-3 last:border-0 hover:bg-surface-2 transition-colors">
+                <td class="px-6 py-4">
+                  <a href={`/sessions/${s.id}`} class="text-text-primary hover:text-primary-400 font-medium">
+                    {s.title}
+                  </a>
+                </td>
+                <td class="px-6 py-4">
+                  <Badge variant="session-status" value={s.status}>{sessionStatusLabel(s.status)}</Badge>
+                </td>
+                <td class="px-6 py-4 text-center text-text-secondary">{s.participantsCount}</td>
+                <td class="px-6 py-4 text-center text-text-secondary">{s.bugsCount}</td>
+                <td class="px-6 py-4 text-text-secondary">{formatDate(s.createdAt)}</td>
+                <td class="px-6 py-4 text-text-secondary">{s.creatorName}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+  </div>
+</AppLayout>

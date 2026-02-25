@@ -1,0 +1,46 @@
+---
+interface Props {
+  variant?: 'default' | 'session-status' | 'bug-severity' | 'bug-status';
+  value?: string;
+  class?: string;
+}
+
+const { variant = 'default', value = '', class: className = '' } = Astro.props;
+
+const sessionStatusColors: Record<string, string> = {
+  draft: 'bg-text-muted/20 text-text-muted',
+  scheduled: 'bg-primary-500/20 text-primary-400',
+  kickoff: 'bg-amber-500/20 text-amber-400',
+  execution: 'bg-emerald-500/20 text-emerald-400',
+  wrapup: 'bg-orange-500/20 text-orange-400',
+  closed: 'bg-text-muted/20 text-text-secondary',
+};
+
+const bugSeverityColors: Record<string, string> = {
+  blocker: 'bg-severity-blocker/20 text-severity-blocker',
+  major: 'bg-severity-major/20 text-severity-major',
+  minor: 'bg-severity-minor/20 text-severity-minor',
+  enhancement: 'bg-severity-enhancement/20 text-severity-enhancement',
+};
+
+const bugStatusColors: Record<string, string> = {
+  open: 'bg-severity-blocker/20 text-severity-blocker',
+  confirmed: 'bg-severity-major/20 text-severity-major',
+  fixed: 'bg-severity-enhancement/20 text-severity-enhancement',
+  wontfix: 'bg-text-muted/20 text-text-muted',
+  duplicate: 'bg-text-muted/20 text-text-secondary',
+};
+
+function getColorClass(variant: string, value: string): string {
+  if (variant === 'session-status') return sessionStatusColors[value] ?? 'bg-surface-3 text-text-secondary';
+  if (variant === 'bug-severity') return bugSeverityColors[value] ?? 'bg-surface-3 text-text-secondary';
+  if (variant === 'bug-status') return bugStatusColors[value] ?? 'bg-surface-3 text-text-secondary';
+  return 'bg-surface-3 text-text-secondary';
+}
+
+const colorClass = getColorClass(variant, value);
+---
+
+<span class:list={['inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium', colorClass, className]}>
+  <slot />
+</span>

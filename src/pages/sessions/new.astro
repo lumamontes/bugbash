@@ -1,0 +1,94 @@
+---
+import AppLayout from '../../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Card from '@components/ui/Card.astro';
+---
+
+<AppLayout title="Nova Sessão — Bug Bash">
+  <div class="p-8 max-w-2xl">
+    <PageHeader title="Nova Sessão" description="Crie uma nova sessão de bug bash." />
+
+    <Card>
+      <form method="POST" action="/api/sessions" class="space-y-6">
+        <div>
+          <label for="title" class="block text-sm font-medium text-text-primary mb-1.5">Título *</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Ex: Bug Bash Sprint 42"
+          />
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-text-primary mb-1.5">Descrição</label>
+          <textarea
+            id="description"
+            name="description"
+            rows="3"
+            class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            placeholder="Descreva o objetivo da sessão..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label for="scheduledAt" class="block text-sm font-medium text-text-primary mb-1.5">Data Agendada</label>
+          <input
+            type="datetime-local"
+            id="scheduledAt"
+            name="scheduledAt"
+            class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          />
+        </div>
+
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label for="kickoffDuration" class="block text-sm font-medium text-text-primary mb-1.5">Kickoff (min)</label>
+            <input
+              type="number"
+              id="kickoffDuration"
+              name="kickoffDuration"
+              value="15"
+              min="1"
+              class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label for="executionDuration" class="block text-sm font-medium text-text-primary mb-1.5">Execução (min)</label>
+            <input
+              type="number"
+              id="executionDuration"
+              name="executionDuration"
+              value="60"
+              min="1"
+              class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+          <div>
+            <label for="wrapupDuration" class="block text-sm font-medium text-text-primary mb-1.5">Encerramento (min)</label>
+            <input
+              type="number"
+              id="wrapupDuration"
+              name="wrapupDuration"
+              value="15"
+              min="1"
+              class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button
+            type="submit"
+            class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Criar Sessão
+          </button>
+          <a href="/sessions" class="text-sm text-text-secondary hover:text-text-primary transition-colors">Cancelar</a>
+        </div>
+      </form>
+    </Card>
+  </div>
+</AppLayout>

@@ -1,0 +1,181 @@
+---
+import AppLayout from '../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Card from '@components/ui/Card.astro';
+import AnalyticsCharts from '@components/AnalyticsCharts';
+import { db } from '@db/index';
+import { sessions, bugs, users, squads, sessionParticipants, userBadges, badgeDefinitions } from '@db/schema';
+import { eq, desc, sql, count } from 'drizzle-orm';
+
+const user = Astro.locals.user!;
+const orgId = user.orgId;
+
+// All sessions ordered by date
+const allSessions = db
+  .select({ id: sessions.id, title: sessions.title, createdAt: sessions.createdAt })
+  .from(sessions)
+  .where(eq(sessions.orgId, orgId))
+  .orderBy(sessions.createdAt)
+  .all();
+
+// All bugs with session+reporter info
+const allBugs = db
+  .select({
+    id: bugs.id,
+    sessionId: bugs.sessionId,
+    severity: bugs.severity,
+    status: bugs.status,
+    reportedVia: bugs.reportedVia,
+    qualityScore: bugs.qualityScore,
+    reporterId: bugs.reportedBy,
+    reporterName: users.name,
+    reporterSquadId: users.squadId,
+  })
+  .from(bugs)
+  .innerJoin(sessions, eq(bugs.sessionId, sessions.id))
+  .innerJoin(users, eq(bugs.reportedBy, users.id))
+  .where(eq(sessions.orgId, orgId))
+  .all();
+
+// --- Compute chart data ---
+
+// 1. Bugs per session (line chart)
+const sessionTrend = allSessions.map(s => {
+  const sessionBugs = allBugs.filter(b => b.sessionId === s.id);
+  return { title: s.title.length > 15 ? s.title.slice(0, 15) + '...' : s.title, bugs: sessionBugs.length, date: s.createdAt.toISOString() };
+});
+
+// 2. Severity per session (stacked bar)
+const severityTrend = allSessions.map(s => {
+  const sessionBugs = allBugs.filter(b => b.sessionId === s.id);
+  return {
+    title: s.title.length > 15 ? s.title.slice(0, 15) + '...' : s.title,
+    blocker: sessionBugs.filter(b => b.severity === 'blocker').length,
+    major: sessionBugs.filter(b => b.severity === 'major').length,
+    minor: sessionBugs.filter(b => b.severity === 'minor').length,
+    enhancement: sessionBugs.filter(b => b.severity === 'enhancement').length,
+  };
+});
+
+// 3. Squad leaderboard
+const orgSquads = db.select({ id: squads.id, name: squads.name }).from(squads).where(eq(squads.orgId, orgId)).all();
+const squadData = orgSquads.map(sq => {
+  const count = allBugs.filter(b => b.reporterSquadId === sq.id).length;
+  return { name: sq.name, bugs: count };
+}).filter(s => s.bugs > 0).sort((a, b) => b.bugs - a.bugs);
+
+// 4. Top reporters
+const reporterMap: Record<string, { name: string; bugs: number; totalQuality: number }> = {};
+allBugs.forEach(b => {
+  if (!reporterMap[b.reporterId]) {
+    reporterMap[b.reporterId] = { name: b.reporterName, bugs: 0, totalQuality: 0 };
+  }
+  reporterMap[b.reporterId].bugs++;
+  reporterMap[b.reporterId].totalQuality += b.qualityScore ?? 0;
+});
+const topReporters = Object.values(reporterMap)
+  .map(r => ({ name: r.name, bugs: r.bugs, avgQuality: r.bugs > 0 ? r.totalQuality / r.bugs : 0 }))
+  .sort((a, b) => b.bugs - a.bugs)
+  .slice(0, 10);
+
+// 5. Source: widget vs platform
+const platformCount = allBugs.filter(b => b.reportedVia === 'platform').length;
+const widgetCount = allBugs.filter(b => b.reportedVia === 'widget').length;
+const sourceData = [
+  { name: 'Plataforma', value: platformCount, color: '#6366f1' },
+  { name: 'Widget', value: widgetCount, color: '#22c55e' },
+].filter(d => d.value > 0);
+
+// 6. Resolution funnel
+const totalBugs = allBugs.length;
+const confirmedBugs = allBugs.filter(b => ['confirmed', 'fixed'].includes(b.status)).length;
+const fixedBugs = allBugs.filter(b => b.status === 'fixed').length;
+const resolutionData = [
+  { name: 'Reportados', value: totalBugs, color: '#6366f1' },
+  { name: 'Confirmados', value: confirmedBugs, color: '#f97316' },
+  { name: 'Corrigidos', value: fixedBugs, color: '#22c55e' },
+];
+
+// Summary stats
+const totalSessions = allSessions.length;
+const avgBugsPerSession = totalSessions > 0 ? Math.round(totalBugs / totalSessions) : 0;
+const resolutionRate = totalBugs > 0 ? Math.round((fixedBugs / totalBugs) * 100) : 0;
+const totalParticipants = db
+  .select({ count: sql<number>`COUNT(DISTINCT ${sessionParticipants.userId})` })
+  .from(sessionParticipants)
+  .innerJoin(sessions, eq(sessionParticipants.sessionId, sessions.id))
+  .where(eq(sessions.orgId, orgId))
+  .get()!.count;
+
+// Top badges — users with most badges
+const topBadgeUsers = db
+  .select({
+    userName: users.name,
+    badgeCount: sql<number>`COUNT(${userBadges.id})`,
+  })
+  .from(userBadges)
+  .innerJoin(users, eq(userBadges.userId, users.id))
+  .groupBy(users.id)
+  .orderBy(sql`COUNT(${userBadges.id}) DESC`)
+  .limit(5)
+  .all();
+---
+
+<AppLayout title="Analytics — Bug Bash">
+  <div class="p-8">
+    <PageHeader title="Analytics" description="Visão geral de tendências e métricas das sessões de bug bash." />
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+      <Card class="!p-4">
+        <p class="text-text-muted text-xs font-medium">Sessões</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{totalSessions}</p>
+      </Card>
+      <Card class="!p-4">
+        <p class="text-text-muted text-xs font-medium">Total de Bugs</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{totalBugs}</p>
+      </Card>
+      <Card class="!p-4">
+        <p class="text-text-muted text-xs font-medium">Média/Sessão</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{avgBugsPerSession}</p>
+      </Card>
+      <Card class="!p-4">
+        <p class="text-text-muted text-xs font-medium">Taxa Resolução</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{resolutionRate}%</p>
+      </Card>
+      <Card class="!p-4">
+        <p class="text-text-muted text-xs font-medium">Participantes</p>
+        <p class="text-2xl font-bold text-text-primary mt-1">{totalParticipants}</p>
+      </Card>
+    </div>
+
+    <!-- Charts -->
+    <AnalyticsCharts
+      sessionTrend={sessionTrend}
+      severityTrend={severityTrend}
+      squadData={squadData}
+      topReporters={topReporters}
+      sourceData={sourceData}
+      resolutionData={resolutionData}
+      client:load
+    />
+
+    <!-- Top Badges -->
+    {topBadgeUsers.length > 0 && (
+      <Card class="mt-8">
+        <h2 class="text-lg font-semibold text-text-primary mb-4">Top Conquistas</h2>
+        <div class="space-y-3">
+          {topBadgeUsers.map((u, i) => (
+            <div class="flex items-center justify-between p-3 rounded-lg bg-surface-2">
+              <div class="flex items-center gap-3">
+                <span class="text-text-muted text-sm font-mono w-6">{i + 1}.</span>
+                <span class="text-text-primary text-sm font-medium">{u.userName}</span>
+              </div>
+              <span class="text-primary-400 text-sm font-semibold">{u.badgeCount} conquistas</span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    )}
+  </div>
+</AppLayout>

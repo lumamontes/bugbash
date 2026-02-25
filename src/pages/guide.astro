@@ -1,0 +1,141 @@
+---
+import AppLayout from '../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Card from '@components/ui/Card.astro';
+---
+
+<AppLayout title="Guia — Bug Bash">
+  <div class="p-8 max-w-4xl">
+    <PageHeader title="Guia do Bug Bash" description="Tudo que você precisa saber para participar e facilitar sessões de bug bash." />
+
+    <!-- O que é -->
+    <Card class="mb-6">
+      <h2 class="text-lg font-semibold text-text-primary mb-3">O que é um Bug Bash?</h2>
+      <p class="text-text-secondary text-sm leading-relaxed">
+        Bug Bash é uma sessão colaborativa de testes onde toda a equipe se reúne para encontrar bugs em um produto ou funcionalidade.
+        É uma prática comum em empresas de tecnologia para melhorar a qualidade do software antes de um lançamento.
+        Cada participante testa o produto livremente ou seguindo scripts de teste, reportando os problemas encontrados.
+      </p>
+    </Card>
+
+    <!-- Como funciona -->
+    <Card class="mb-6">
+      <h2 class="text-lg font-semibold text-text-primary mb-3">Como Funciona</h2>
+      <div class="space-y-4">
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-sm font-bold flex-shrink-0">1</div>
+          <div>
+            <p class="text-sm font-medium text-text-primary">Planejamento</p>
+            <p class="text-text-secondary text-sm">O facilitador cria a sessão, define scripts de teste, cadastra credenciais e convida participantes.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-sm font-bold flex-shrink-0">2</div>
+          <div>
+            <p class="text-sm font-medium text-text-primary">Kickoff</p>
+            <p class="text-text-secondary text-sm">Apresentação do escopo, orientações e distribuição de credenciais de teste. Duração sugerida: 15 minutos.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-sm font-bold flex-shrink-0">3</div>
+          <div>
+            <p class="text-sm font-medium text-text-primary">Execução</p>
+            <p class="text-text-secondary text-sm">Todos testam simultaneamente, reportando bugs com evidências. O feed ao vivo mostra bugs em tempo real. Duração sugerida: 60 minutos.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-sm font-bold flex-shrink-0">4</div>
+          <div>
+            <p class="text-sm font-medium text-text-primary">Encerramento</p>
+            <p class="text-text-secondary text-sm">Triagem dos bugs encontrados: confirmar, ajustar severidades e marcar duplicados. Duração sugerida: 15 minutos.</p>
+          </div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-primary-600/20 text-primary-400 flex items-center justify-center text-sm font-bold flex-shrink-0">5</div>
+          <div>
+            <p class="text-sm font-medium text-text-primary">Relatório</p>
+            <p class="text-text-secondary text-sm">Visualize métricas da sessão e exporte o relatório em Markdown para compartilhar com a equipe.</p>
+          </div>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Guia do Facilitador -->
+    <Card class="mb-6">
+      <h2 class="text-lg font-semibold text-text-primary mb-3">Guia do Facilitador</h2>
+      <div class="space-y-3 text-sm text-text-secondary leading-relaxed">
+        <p><span class="text-text-primary font-medium">Antes da sessão:</span> Crie a sessão com título descritivo. Adicione scripts de teste detalhados com passos claros e resultados esperados. Cadastre credenciais de teste para cada perfil/ambiente necessário. Convide todos os participantes.</p>
+        <p><span class="text-text-primary font-medium">Durante o kickoff:</span> Apresente o escopo do teste e as áreas de foco. Explique como reportar bugs (título claro, passos para reproduzir, severidade). Distribua credenciais de teste.</p>
+        <p><span class="text-text-primary font-medium">Durante a execução:</span> Acompanhe o feed ao vivo de bugs. Esteja disponível para tirar dúvidas. Monitore o timer da sessão.</p>
+        <p><span class="text-text-primary font-medium">No encerramento:</span> Use a tabela de triagem para revisar todos os bugs. Confirme bugs válidos, marque duplicados e ajuste severidades. Gere o relatório final.</p>
+      </div>
+    </Card>
+
+    <!-- Guia dos Participantes -->
+    <Card class="mb-6">
+      <h2 class="text-lg font-semibold text-text-primary mb-3">Guia dos Participantes</h2>
+      <div class="space-y-3 text-sm text-text-secondary leading-relaxed">
+        <p><span class="text-text-primary font-medium">Preparação:</span> Acesse a sessão e reserve suas credenciais de teste. Revise os scripts de teste disponíveis.</p>
+        <p><span class="text-text-primary font-medium">Reportando bugs:</span> Use títulos descritivos e objetivos. Inclua passos detalhados para reproduzir o problema. Adicione screenshots ou gravações como evidência. Selecione a severidade adequada.</p>
+        <p><span class="text-text-primary font-medium">Boas práticas:</span> Verifique duplicados antes de reportar (o sistema sugere automaticamente). Teste em diferentes navegadores e dispositivos quando possível. Siga os scripts de teste mas também explore livremente.</p>
+      </div>
+    </Card>
+
+    <!-- Guia de Severidade -->
+    <Card class="mb-6">
+      <h2 class="text-lg font-semibold text-text-primary mb-3">Classificação de Severidade</h2>
+      <div class="space-y-3">
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-red-500/5 border border-red-500/10">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-red-500/20 text-red-400 flex-shrink-0">Bloqueante</span>
+          <p class="text-sm text-text-secondary">Impede o uso de uma funcionalidade crítica. O usuário não consegue completar um fluxo principal. Exemplos: erro 500 no login, tela em branco, perda de dados.</p>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-orange-500/5 border border-orange-500/10">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-orange-500/20 text-orange-400 flex-shrink-0">Grave</span>
+          <p class="text-sm text-text-secondary">Funcionalidade com problema significativo, mas existe workaround. Exemplos: filtro não funciona, cálculo errado, validação ausente em campo obrigatório.</p>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-yellow-500/20 text-yellow-400 flex-shrink-0">Menor</span>
+          <p class="text-sm text-text-secondary">Problema cosmético ou de baixo impacto. Exemplos: texto cortado, alinhamento errado, tooltip com typo, espaçamento inconsistente.</p>
+        </div>
+        <div class="flex items-start gap-3 p-3 rounded-lg bg-green-500/5 border border-green-500/10">
+          <span class="px-2 py-0.5 rounded text-xs font-bold bg-green-500/20 text-green-400 flex-shrink-0">Melhoria</span>
+          <p class="text-sm text-text-secondary">Sugestão de melhoria na experiência do usuário. Exemplos: reordenar campos, adicionar atalho, melhorar mensagem de feedback.</p>
+        </div>
+      </div>
+    </Card>
+
+    <!-- Score de Qualidade -->
+    <Card>
+      <h2 class="text-lg font-semibold text-text-primary mb-3">Score de Qualidade do Bug</h2>
+      <p class="text-text-secondary text-sm mb-4 leading-relaxed">
+        Cada bug recebe um score de qualidade de 0 a 100 baseado na completude do reporte. Quanto mais informações, mais fácil para a equipe de desenvolvimento corrigir o problema.
+      </p>
+      <div class="grid grid-cols-2 gap-3 text-sm">
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Título descritivo</p>
+          <p class="text-text-muted text-xs">+15 pontos</p>
+        </div>
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Descrição detalhada</p>
+          <p class="text-text-muted text-xs">+20 pontos</p>
+        </div>
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Passos para reproduzir</p>
+          <p class="text-text-muted text-xs">+25 pontos</p>
+        </div>
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Severidade definida</p>
+          <p class="text-text-muted text-xs">+15 pontos</p>
+        </div>
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Evidências anexadas</p>
+          <p class="text-text-muted text-xs">+15 pontos</p>
+        </div>
+        <div class="p-3 rounded-lg bg-surface-2">
+          <p class="text-text-primary font-medium">Base</p>
+          <p class="text-text-muted text-xs">+10 pontos</p>
+        </div>
+      </div>
+    </Card>
+  </div>
+</AppLayout>

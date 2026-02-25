@@ -1,11 +1,147 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import AppLayout from '../layouts/app-layout.astro';
+import Card from '@components/ui/Card.astro';
+import Badge from '@components/ui/Badge.astro';
+import { db } from '@db/index';
+import { sessions, bugs, sessionParticipants, users } from '@db/schema';
+import { eq, and, notInArray, count, desc } from 'drizzle-orm';
+import { sessionStatusLabel, bugSeverityLabel, formatDate } from '@lib/format';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const user = Astro.locals.user!;
+
+if (user.role === 'participant') {
+  return Astro.redirect('/sessions');
+}
+
+const orgId = user.orgId;
+const firstName = user.name.split(' ')[0];
+
+// Active sessions (not draft/closed)
+const activeSessionsCount = db
+  .select({ count: count() })
+  .from(sessions)
+  .where(and(
+    eq(sessions.orgId, orgId),
+    notInArray(sessions.status, ['draft', 'closed']),
+  ))
+  .get()!.count;
+
+// Total bugs
+const totalBugsCount = db
+  .select({ count: count() })
+  .from(bugs)
+  .innerJoin(sessions, eq(bugs.sessionId, sessions.id))
+  .where(eq(sessions.orgId, orgId))
+  .get()!.count;
+
+// Total participants (distinct users in session_participants for org sessions)
+const totalParticipantsCount = db
+  .select({ count: count() })
+  .from(sessionParticipants)
+  .innerJoin(sessions, eq(sessionParticipants.sessionId, sessions.id))
+  .where(eq(sessions.orgId, orgId))
+  .get()!.count;
+
+// Recent 5 sessions
+const recentSessions = db
+  .select({
+    id: sessions.id,
+    title: sessions.title,
+    status: sessions.status,
+    createdAt: sessions.createdAt,
+  })
+  .from(sessions)
+  .where(eq(sessions.orgId, orgId))
+  .orderBy(desc(sessions.createdAt))
+  .limit(5)
+  .all();
+
+// Recent 5 bugs
+const recentBugs = db
+  .select({
+    id: bugs.id,
+    sessionId: bugs.sessionId,
+    title: bugs.title,
+    severity: bugs.severity,
+    reporterName: users.name,
+    createdAt: bugs.createdAt,
+  })
+  .from(bugs)
+  .innerJoin(sessions, eq(bugs.sessionId, sessions.id))
+  .innerJoin(users, eq(bugs.reportedBy, users.id))
+  .where(eq(sessions.orgId, orgId))
+  .orderBy(desc(bugs.createdAt))
+  .limit(5)
+  .all();
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<AppLayout title="Painel — Bug Bash">
+  <div class="p-8">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-text-primary">Olá, {firstName}!</h1>
+      <p class="text-text-secondary mt-1">Bem-vindo ao Bug Bash. Selecione uma sessão para começar.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <Card>
+        <p class="text-text-muted text-sm font-medium">Sessões Ativas</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">{activeSessionsCount}</p>
+      </Card>
+      <Card>
+        <p class="text-text-muted text-sm font-medium">Bugs Reportados</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">{totalBugsCount}</p>
+      </Card>
+      <Card>
+        <p class="text-text-muted text-sm font-medium">Participantes</p>
+        <p class="text-3xl font-bold text-text-primary mt-2">{totalParticipantsCount}</p>
+      </Card>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Recent Sessions -->
+      <Card>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text-primary">Sessões Recentes</h2>
+          <a href="/sessions" class="text-sm text-primary-400 hover:text-primary-300">Ver todas</a>
+        </div>
+        {recentSessions.length === 0 ? (
+          <p class="text-text-muted text-sm py-4 text-center">Nenhuma sessão encontrada.</p>
+        ) : (
+          <div class="space-y-3">
+            {recentSessions.map(s => (
+              <a href={`/sessions/${s.id}`} class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-2 transition-colors group">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-text-primary group-hover:text-primary-400 truncate">{s.title}</p>
+                  <p class="text-xs text-text-muted mt-0.5">{formatDate(s.createdAt)}</p>
+                </div>
+                <Badge variant="session-status" value={s.status}>{sessionStatusLabel(s.status)}</Badge>
+              </a>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <!-- Recent Bugs -->
+      <Card>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text-primary">Bugs Recentes</h2>
+        </div>
+        {recentBugs.length === 0 ? (
+          <p class="text-text-muted text-sm py-4 text-center">Nenhum bug reportado.</p>
+        ) : (
+          <div class="space-y-3">
+            {recentBugs.map(b => (
+              <a href={`/sessions/${b.sessionId}/bugs/${b.id}`} class="flex items-center justify-between p-3 rounded-lg hover:bg-surface-2 transition-colors group">
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-text-primary group-hover:text-primary-400 truncate">{b.title}</p>
+                  <p class="text-xs text-text-muted mt-0.5">{b.reporterName} · {formatDate(b.createdAt)}</p>
+                </div>
+                <Badge variant="bug-severity" value={b.severity}>{bugSeverityLabel(b.severity)}</Badge>
+              </a>
+            ))}
+          </div>
+        )}
+      </Card>
+    </div>
+  </div>
+</AppLayout>

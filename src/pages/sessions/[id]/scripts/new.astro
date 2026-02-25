@@ -1,0 +1,168 @@
+---
+import AppLayout from '../../../../layouts/app-layout.astro';
+import PageHeader from '@components/ui/PageHeader.astro';
+import Card from '@components/ui/Card.astro';
+import { db } from '@db/index';
+import { sessions } from '@db/schema';
+import { eq } from 'drizzle-orm';
+
+const user = Astro.locals.user!;
+const { id } = Astro.params;
+
+const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
+if (!session || session.orgId !== user.orgId) {
+  return Astro.redirect('/sessions');
+}
+---
+
+<AppLayout title={`Novo Script — ${session.title}`}>
+  <div class="p-8 max-w-2xl">
+    <div class="mb-6">
+      <a href={`/sessions/${id}`} class="text-text-muted hover:text-text-primary text-sm">&larr; Voltar para sessão</a>
+    </div>
+    <PageHeader title="Novo Script de Teste" description={`Sessão: ${session.title}`} />
+
+    <Card>
+      <form method="POST" action={`/api/sessions/${id}/scripts`} class="space-y-6">
+        <div>
+          <label for="title" class="block text-sm font-medium text-text-primary mb-1.5">Título *</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="Ex: Fluxo de login"
+          />
+        </div>
+
+        <div>
+          <label for="description" class="block text-sm font-medium text-text-primary mb-1.5">Descrição</label>
+          <textarea
+            id="description"
+            name="description"
+            rows="2"
+            class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            placeholder="Descreva o cenário de teste..."
+          ></textarea>
+        </div>
+
+        <!-- Tab: Manual or Markdown Import -->
+        <div>
+          <div class="flex items-center gap-4 mb-3">
+            <label class="block text-sm font-medium text-text-primary">Passos</label>
+            <div class="flex items-center gap-1 text-xs">
+              <button type="button" id="tab-manual" class="px-2 py-1 rounded bg-primary-600/20 text-primary-400" onclick="switchTab('manual')">Manual</button>
+              <button type="button" id="tab-markdown" class="px-2 py-1 rounded text-text-muted hover:text-text-primary" onclick="switchTab('markdown')">Importar Markdown</button>
+            </div>
+          </div>
+
+          <div id="panel-manual">
+            <p class="text-xs text-text-muted mb-2">Um passo por linha. Formato: Instrução | Resultado Esperado</p>
+            <textarea
+              id="steps"
+              name="steps"
+              rows="6"
+              class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+              placeholder={"Acessar /login | Página de login exibida\nPreencher email e senha | Campos preenchidos\nClicar em Entrar | Redirecionado ao painel"}
+            ></textarea>
+          </div>
+
+          <div id="panel-markdown" class="hidden">
+            <p class="text-xs text-text-muted mb-2">Cole um roteiro em markdown. Listas numeradas ou com bullet serão convertidas em passos automaticamente.</p>
+            <textarea
+              id="markdownInput"
+              rows="8"
+              class="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-sm"
+              placeholder={"1. Acessar a página de login\n2. Inserir email válido\n3. Inserir senha correta\n4. Clicar em \"Entrar\"\n   - Esperado: redirecionamento ao painel"}
+            ></textarea>
+            <button type="button" id="btn-parse" class="mt-2 px-3 py-1.5 bg-surface-2 border border-surface-3 text-text-primary text-xs rounded hover:bg-surface-3 transition-colors" onclick="parseMarkdown()">
+              Converter para passos
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-2">
+          <button type="submit" class="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors">
+            Criar Script
+          </button>
+          <a href={`/sessions/${id}`} class="text-sm text-text-secondary hover:text-text-primary transition-colors">Cancelar</a>
+        </div>
+      </form>
+    </Card>
+  </div>
+</AppLayout>
+
+<script is:inline>
+function switchTab(tab) {
+  const manual = document.getElementById('panel-manual');
+  const markdown = document.getElementById('panel-markdown');
+  const tabManual = document.getElementById('tab-manual');
+  const tabMarkdown = document.getElementById('tab-markdown');
+
+  if (tab === 'manual') {
+    manual.classList.remove('hidden');
+    markdown.classList.add('hidden');
+    tabManual.className = 'px-2 py-1 rounded bg-primary-600/20 text-primary-400';
+    tabMarkdown.className = 'px-2 py-1 rounded text-text-muted hover:text-text-primary';
+  } else {
+    manual.classList.add('hidden');
+    markdown.classList.remove('hidden');
+    tabMarkdown.className = 'px-2 py-1 rounded bg-primary-600/20 text-primary-400';
+    tabManual.className = 'px-2 py-1 rounded text-text-muted hover:text-text-primary';
+  }
+}
+
+function parseMarkdown() {
+  const input = document.getElementById('markdownInput').value;
+  const stepsTextarea = document.getElementById('steps');
+  const lines = input.split('\n');
+  const parsed = [];
+  let currentStep = '';
+  let currentExpected = '';
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Check if it's a numbered or bulleted list item
+    const numberedMatch = trimmed.match(/^\d+[\.\)]\s*(.*)/);
+    const bulletMatch = trimmed.match(/^[-*]\s*(.*)/);
+    const subItemMatch = trimmed.match(/^\s+[-*]\s*(.*)/);
+
+    if (subItemMatch) {
+      // Sub-item: treat as expected result
+      const content = subItemMatch[1].replace(/^esperado:\s*/i, '').replace(/^expected:\s*/i, '');
+      currentExpected = content;
+    } else if (numberedMatch) {
+      // Save previous step
+      if (currentStep) {
+        parsed.push(currentExpected ? `${currentStep} | ${currentExpected}` : currentStep);
+      }
+      currentStep = numberedMatch[1];
+      currentExpected = '';
+    } else if (bulletMatch) {
+      if (currentStep) {
+        parsed.push(currentExpected ? `${currentStep} | ${currentExpected}` : currentStep);
+      }
+      currentStep = bulletMatch[1];
+      currentExpected = '';
+    } else {
+      // Continuation or plain text
+      if (currentStep) {
+        currentStep += ' ' + trimmed;
+      } else {
+        currentStep = trimmed;
+      }
+    }
+  }
+
+  // Save last step
+  if (currentStep) {
+    parsed.push(currentExpected ? `${currentStep} | ${currentExpected}` : currentStep);
+  }
+
+  stepsTextarea.value = parsed.join('\n');
+  switchTab('manual');
+}
+</script>
