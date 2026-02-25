@@ -14,7 +14,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm build
 
-# Production stage — slim, only runtime deps
+# Production stage — includes dev deps for seeding
 FROM node:20-slim AS production
 
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
