@@ -24,10 +24,14 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/ ./packages/
-RUN pnpm install --frozen-lockfile --prod && rm -rf /root/.local/share/pnpm/store
+RUN pnpm install --frozen-lockfile && rm -rf /root/.local/share/pnpm/store
 
 COPY --from=base /app/dist ./dist
 COPY --from=base /app/drizzle ./drizzle
+COPY --from=base /app/scripts ./scripts
+COPY --from=base /app/src ./src
+COPY --from=base /app/tsconfig.json ./tsconfig.json
+COPY --from=base /app/drizzle.config.ts ./drizzle.config.ts
 
 # Data and uploads directories (mount volumes here)
 RUN mkdir -p /app/data /app/uploads
