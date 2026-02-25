@@ -1,0 +1,14 @@
+node_modules/
+dist/
+data/
+uploads/
+.astro/
+.env
+.env.*
+.DS_Store
+.idea/
+.drizzle/
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
