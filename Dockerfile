@@ -33,9 +33,8 @@ COPY --from=base /app/drizzle ./drizzle
 RUN mkdir -p /app/data /app/uploads
 
 ENV HOST=0.0.0.0
-ENV PORT=4321
 ENV NODE_ENV=production
 
-EXPOSE 4321
+EXPOSE 8080
 
 CMD ["node", "dist/server/entry.mjs"]
