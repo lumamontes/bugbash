@@ -2,6 +2,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { SESSION_COOKIE, validateSession, getUserCount } from '@lib/auth';
 
 const PUBLIC_PATHS = [
+  '/health',
   '/login',
   '/entrar',
   '/setup',
