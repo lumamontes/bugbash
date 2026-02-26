@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db } from '@db/index';
 import { sessions, bugs, sessionParticipants, users } from '@db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { requireSessionContext } from '@lib/services/helpers';
 
 const severityEmoji: Record<string, string> = {
   blocker: '\uD83D\uDD34',
@@ -26,20 +27,16 @@ const statusLabel: Record<string, string> = {
 };
 
 export const GET: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
-  const session = db
+  const session = (await db
     .select()
     .from(sessions)
     .where(eq(sessions.id, params.id!))
-    .get();
+  )[0]!;
 
-  if (!session || session.orgId !== user.orgId) {
-    return new Response('Not found', { status: 404 });
-  }
-
-  const allBugs = db
+  const allBugs = await db
     .select({
       title: bugs.title,
       severity: bugs.severity,
@@ -51,20 +48,17 @@ export const GET: APIRoute = async ({ params, locals }) => {
     .from(bugs)
     .innerJoin(users, eq(bugs.reportedBy, users.id))
     .where(eq(bugs.sessionId, params.id!))
-    .orderBy(desc(bugs.createdAt))
-    .all();
+    .orderBy(desc(bugs.createdAt));
 
-  const participantCount = db
+  const participantCount = (await db
     .select({ id: sessionParticipants.id })
     .from(sessionParticipants)
-    .where(eq(sessionParticipants.sessionId, params.id!))
-    .all().length;
+    .where(eq(sessionParticipants.sessionId, params.id!)))
+    .length;
 
-  // Severity counts
   const severityCounts: Record<string, number> = { blocker: 0, major: 0, minor: 0, enhancement: 0 };
   allBugs.forEach(b => { severityCounts[b.severity]++; });
 
-  // Build markdown
   const lines: string[] = [];
   lines.push(`# Bug Bash: ${session.title}`);
   lines.push('');

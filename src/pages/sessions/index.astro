@@ -3,29 +3,11 @@ import AppLayout from '../../layouts/app-layout.astro';
 import PageHeader from '@components/ui/PageHeader.astro';
 import Badge from '@components/ui/Badge.astro';
 import EmptyState from '@components/ui/EmptyState.astro';
-import { db } from '@db/index';
-import { sessions, sessionParticipants, bugs, users } from '@db/schema';
-import { eq, count, desc, sql } from 'drizzle-orm';
 import { sessionStatusLabel, formatDate } from '@lib/format';
+import { getSessionList } from '@lib/services/sessions';
 
 const user = Astro.locals.user!;
-const orgId = user.orgId;
-
-const sessionList = db
-  .select({
-    id: sessions.id,
-    title: sessions.title,
-    status: sessions.status,
-    createdAt: sessions.createdAt,
-    creatorName: users.name,
-    participantsCount: sql<number>`(SELECT COUNT(*) FROM session_participants WHERE session_id = ${sessions.id})`,
-    bugsCount: sql<number>`(SELECT COUNT(*) FROM bugs WHERE session_id = ${sessions.id})`,
-  })
-  .from(sessions)
-  .innerJoin(users, eq(sessions.createdBy, users.id))
-  .where(eq(sessions.orgId, orgId))
-  .orderBy(desc(sessions.createdAt))
-  .all();
+const sessionList = await getSessionList(user.orgId);
 ---
 
 <AppLayout title="Sessões — Bug Bash">

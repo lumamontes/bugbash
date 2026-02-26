@@ -1,0 +1,39 @@
+---
+import Badge from '@components/ui/Badge.astro';
+import Card from '@components/ui/Card.astro';
+import { bugSeverityLabel, bugStatusLabel } from '@lib/format';
+
+interface BugItem {
+  id: string;
+  title: string;
+  severity: string;
+  status: string;
+  reporterName: string;
+}
+
+interface Props {
+  sessionId: string;
+  bugs: BugItem[];
+  title?: string;
+}
+
+const { sessionId, bugs, title = 'Bugs reportados' } = Astro.props;
+---
+
+<Card>
+  <h2 class="text-sm font-semibold text-text-primary mb-3">{title} ({bugs.length})</h2>
+  <div class="space-y-2">
+    {bugs.map(b => (
+      <a href={`/sessions/${sessionId}/bugs/${b.id}`} class="flex items-center justify-between p-3 rounded-lg bg-surface-2 hover:bg-surface-3 transition-colors">
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium text-text-primary truncate">{b.title}</p>
+          <p class="text-xs text-text-muted mt-0.5">{b.reporterName}</p>
+        </div>
+        <div class="flex items-center gap-2 ml-3">
+          <Badge variant="bug-severity" value={b.severity}>{bugSeverityLabel(b.severity)}</Badge>
+          <Badge variant="bug-status" value={b.status}>{bugStatusLabel(b.status)}</Badge>
+        </div>
+      </a>
+    ))}
+  </div>
+</Card>

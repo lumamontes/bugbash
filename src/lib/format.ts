@@ -3,8 +3,9 @@ const dateTimeFmt = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeS
 
 const rtf = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
 
-export function formatDate(date: Date | string | number): string {
-  return dateFmt.format(new Date(date));
+export async function formatDate(date: Date | string | number): Promise<string> {
+  return date ?.toString();
+  // return await dateFmt.format(new Date(date));
 }
 
 export function formatDateTime(date: Date | string | number): string {

@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testScripts, testSections, testScenarios } from '@db/schema';
+import { testScripts, testSections, testScenarios } from '@db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { requireSessionContext } from '@lib/services/helpers';
 import crypto from 'node:crypto';
 
-function parseMarkdown(content: string, scriptId: string) {
+function parseMarkdown(content: string) {
   const sections: { title: string; scenarios: { title: string }[] }[] = [];
   let currentSection: { title: string; scenarios: { title: string }[] } | null = null;
 
@@ -25,7 +26,6 @@ function parseCsv(content: string) {
   const lines = content.split('\n').filter((l) => l.trim());
   if (lines.length === 0) return [];
 
-  // Parse header
   const header = lines[0].split(',').map((h) => h.trim().toLowerCase());
   const sectionIdx = header.indexOf('section');
   const titleIdx = header.indexOf('title');
@@ -61,11 +61,8 @@ function parseCsv(content: string) {
 }
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
   const body = await request.json();
   const { format, content, scriptId } = body;
@@ -78,42 +75,40 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: 'format must be markdown or csv' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  // Verify scriptId belongs to this session
-  const script = db.select().from(testScripts).where(eq(testScripts.id, scriptId)).get();
+  const script = (await db.select().from(testScripts).where(eq(testScripts.id, scriptId)))[0];
   if (!script || script.sessionId !== params.id!) {
     return new Response(JSON.stringify({ error: 'Script not found for this session' }), { status: 404, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const parsed = format === 'markdown' ? parseMarkdown(content, scriptId) : parseCsv(content);
+  const parsed = format === 'markdown' ? parseMarkdown(content) : parseCsv(content);
 
   let sectionsCreated = 0;
   let scenariosCreated = 0;
 
-  // Get current max sort order for sections in this script
-  const maxSectionOrder = db.select({ max: sql<number>`COALESCE(MAX(sort_order), -1)` })
+  const maxSectionOrder = (await db.select({ max: sql<number>`COALESCE(MAX(sort_order), -1)` })
     .from(testSections)
     .where(eq(testSections.scriptId, scriptId))
-    .get()!.max;
+  )[0]!.max;
 
   for (let si = 0; si < parsed.length; si++) {
     const section = parsed[si];
     const sectionId = crypto.randomUUID();
 
-    db.insert(testSections).values({
+    await db.insert(testSections).values({
       id: sectionId,
       scriptId,
       title: section.title,
       status: 'active',
       sortOrder: maxSectionOrder + 1 + si,
       createdAt: new Date(),
-    }).run();
+    });
     sectionsCreated++;
 
     for (let sci = 0; sci < section.scenarios.length; sci++) {
       const scenario = section.scenarios[sci];
       const scenarioId = crypto.randomUUID();
 
-      db.insert(testScenarios).values({
+      await db.insert(testScenarios).values({
         id: scenarioId,
         sectionId,
         title: scenario.title,
@@ -123,7 +118,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
         persona: ('persona' in scenario ? scenario.persona : undefined) || null,
         sortOrder: sci,
         createdAt: new Date(),
-      }).run();
+      });
       scenariosCreated++;
     }
   }

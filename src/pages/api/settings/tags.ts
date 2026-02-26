@@ -15,10 +15,10 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     const tagId = form.get('tagId')?.toString();
     if (!tagId) return new Response('Missing tagId', { status: 400 });
 
-    const tag = db.select().from(tags).where(eq(tags.id, tagId)).get();
+    const tag = (await db.select().from(tags).where(eq(tags.id, tagId)))[0];
     if (!tag || tag.orgId !== user.orgId) return new Response('Not found', { status: 404 });
 
-    db.delete(tags).where(eq(tags.id, tagId)).run();
+    await db.delete(tags).where(eq(tags.id, tagId));
     return redirect('/settings', 303);
   }
 
@@ -26,12 +26,12 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const color = form.get('color')?.toString() || '#6366f1';
   if (!name) return redirect('/settings', 303);
 
-  db.insert(tags).values({
+  await db.insert(tags).values({
     id: crypto.randomUUID(),
     name,
     color,
     orgId: user.orgId,
-  }).run();
+  });
 
   return redirect('/settings', 303);
 };

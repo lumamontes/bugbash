@@ -7,7 +7,7 @@ export const GET: APIRoute = async ({ locals }) => {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const invites = user.role === 'admin' ? listInvites() : listInvites(user.id);
+  const invites = await (user.role === 'admin' ? listInvites() : listInvites(user.id));
 
   return new Response(JSON.stringify(invites), {
     headers: { 'Content-Type': 'application/json' },
@@ -30,7 +30,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
   }
 
-  const invite = createInvite({
+  const invite = await createInvite({
     createdBy: user.id,
     role,
     maxUses,

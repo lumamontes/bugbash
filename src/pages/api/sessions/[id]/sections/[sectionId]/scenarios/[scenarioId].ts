@@ -1,20 +1,17 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testSections, testScenarios, scenarioExecutions } from '@db/schema';
+import { testSections, testScenarios, scenarioExecutions } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSessionContext } from '@lib/services/helpers';
 
-// PUT: update a scenario
 export const PUT: APIRoute = async ({ params, request, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
-
-  const section = db.select().from(testSections).where(eq(testSections.id, params.sectionId!)).get();
+  const section = (await db.select().from(testSections).where(eq(testSections.id, params.sectionId!)))[0];
   if (!section) return new Response('Section not found', { status: 404 });
 
-  const scenario = db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)).get();
+  const scenario = (await db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)))[0];
   if (!scenario || scenario.sectionId !== params.sectionId!) return new Response('Scenario not found', { status: 404 });
 
   const body = await request.json();
@@ -32,33 +29,26 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: 'No fields to update' }), { status: 400, headers: { 'Content-Type': 'application/json' } });
   }
 
-  db.update(testScenarios).set(updates).where(eq(testScenarios.id, params.scenarioId!)).run();
+  await db.update(testScenarios).set(updates).where(eq(testScenarios.id, params.scenarioId!));
 
-  const updated = db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)).get();
+  const updated = (await db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)))[0];
   return new Response(JSON.stringify(updated), {
     headers: { 'Content-Type': 'application/json' },
   });
 };
 
-// DELETE: delete a scenario
 export const DELETE: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
-
-  const section = db.select().from(testSections).where(eq(testSections.id, params.sectionId!)).get();
+  const section = (await db.select().from(testSections).where(eq(testSections.id, params.sectionId!)))[0];
   if (!section) return new Response('Section not found', { status: 404 });
 
-  const scenario = db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)).get();
+  const scenario = (await db.select().from(testScenarios).where(eq(testScenarios.id, params.scenarioId!)))[0];
   if (!scenario || scenario.sectionId !== params.sectionId!) return new Response('Scenario not found', { status: 404 });
 
-  // Delete executions for this scenario first
-  db.delete(scenarioExecutions).where(eq(scenarioExecutions.scenarioId, params.scenarioId!)).run();
-
-  // Delete the scenario
-  db.delete(testScenarios).where(eq(testScenarios.id, params.scenarioId!)).run();
+  await db.delete(scenarioExecutions).where(eq(scenarioExecutions.scenarioId, params.scenarioId!));
+  await db.delete(testScenarios).where(eq(testScenarios.id, params.scenarioId!));
 
   return new Response(JSON.stringify({ success: true }), {
     headers: { 'Content-Type': 'application/json' },

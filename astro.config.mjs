@@ -15,7 +15,7 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     ssr: {
-      external: ['better-sqlite3', '@aws-sdk/client-s3', '@anthropic-ai/sdk', '@linear/sdk'],
+      external: ['pg', 'pg-native', '@supabase/supabase-js', '@anthropic-ai/sdk', '@linear/sdk'],
     },
   },
 });

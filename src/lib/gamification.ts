@@ -26,37 +26,34 @@ interface EvalContext {
   bugId?: string;
 }
 
-export function evaluateBadges(
+export async function evaluateBadges(
   userId: string,
   trigger: 'bug_created' | 'script_completed' | 'session_ended' | 'triage_done',
   context: EvalContext = {},
-): EarnedBadge[] {
+): Promise<EarnedBadge[]> {
   const earned: EarnedBadge[] = [];
 
-  // Get all badge definitions
-  const allBadges = db.select().from(badgeDefinitions).all();
+  const allBadges = await db.select().from(badgeDefinitions);
 
-  // Get user's already-earned badge slugs
-  const existingBadges = db
+  const existingBadgesRows = await db
     .select({ badgeId: userBadges.badgeId })
     .from(userBadges)
-    .where(eq(userBadges.userId, userId))
-    .all();
-  const earnedBadgeIds = new Set(existingBadges.map(b => b.badgeId));
+    .where(eq(userBadges.userId, userId));
+  const earnedBadgeIds = new Set(existingBadgesRows.map(b => b.badgeId));
 
   for (const badge of allBadges) {
     if (earnedBadgeIds.has(badge.id)) continue;
 
-    const shouldAward = checkBadgeCondition(badge, userId, context);
+    const shouldAward = await checkBadgeCondition(badge, userId, context);
     if (shouldAward) {
       const ubId = crypto.randomUUID();
-      db.insert(userBadges).values({
+      await db.insert(userBadges).values({
         id: ubId,
         userId,
         badgeId: badge.id,
         sessionId: context.sessionId || null,
         earnedAt: new Date(),
-      }).run();
+      });
 
       earned.push({
         id: ubId,
@@ -72,108 +69,106 @@ export function evaluateBadges(
   return earned;
 }
 
-function checkBadgeCondition(
+async function checkBadgeCondition(
   badge: typeof badgeDefinitions.$inferSelect,
   userId: string,
   context: EvalContext,
-): boolean {
+): Promise<boolean> {
   switch (badge.slug) {
     case 'first-blood': {
       if (!context.sessionId) return false;
-      const sessionBugs = db
+      const sessionBugs = await db
         .select({ id: bugs.id, reportedBy: bugs.reportedBy })
         .from(bugs)
         .where(eq(bugs.sessionId, context.sessionId))
-        .orderBy(bugs.createdAt)
-        .all();
+        .orderBy(bugs.createdAt);
       return sessionBugs.length > 0 && sessionBugs[0].reportedBy === userId;
     }
 
     case 'bug-hunter': {
-      const totalBugs = db
+      const totalBugsRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(eq(bugs.reportedBy, userId))
-        .get()!.count;
+        .where(eq(bugs.reportedBy, userId));
+      const totalBugs = totalBugsRows[0]?.count ?? 0;
       return totalBugs >= badge.threshold;
     }
 
     case 'bug-slayer': {
-      const totalBugs = db
+      const totalBugsRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(eq(bugs.reportedBy, userId))
-        .get()!.count;
+        .where(eq(bugs.reportedBy, userId));
+      const totalBugs = totalBugsRows[0]?.count ?? 0;
       return totalBugs >= badge.threshold;
     }
 
     case 'bug-legend': {
-      const totalBugs = db
+      const totalBugsRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(eq(bugs.reportedBy, userId))
-        .get()!.count;
+        .where(eq(bugs.reportedBy, userId));
+      const totalBugs = totalBugsRows[0]?.count ?? 0;
       return totalBugs >= badge.threshold;
     }
 
     case 'quality-star': {
-      const highQuality = db
+      const highQualityRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(and(eq(bugs.reportedBy, userId), sql`${bugs.qualityScore} >= 80`))
-        .get()!.count;
+        .where(and(eq(bugs.reportedBy, userId), sql`${bugs.qualityScore} >= 80`));
+      const highQuality = highQualityRows[0]?.count ?? 0;
       return highQuality >= badge.threshold;
     }
 
     case 'perfectionist': {
-      const highQuality = db
+      const highQualityRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(and(eq(bugs.reportedBy, userId), sql`${bugs.qualityScore} >= 80`))
-        .get()!.count;
+        .where(and(eq(bugs.reportedBy, userId), sql`${bugs.qualityScore} >= 80`));
+      const highQuality = highQualityRows[0]?.count ?? 0;
       return highQuality >= badge.threshold;
     }
 
     case 'eagle-eye': {
-      const blockers = db
+      const blockersRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(and(eq(bugs.reportedBy, userId), eq(bugs.severity, 'blocker')))
-        .get()!.count;
+        .where(and(eq(bugs.reportedBy, userId), eq(bugs.severity, 'blocker')));
+      const blockers = blockersRows[0]?.count ?? 0;
       return blockers >= badge.threshold;
     }
 
     case 'duplicate-detective': {
-      const dupes = db
+      const dupesRows = await db
         .select({ count: count() })
         .from(bugs)
-        .where(and(eq(bugs.reportedBy, userId), eq(bugs.status, 'duplicate')))
-        .get()!.count;
+        .where(and(eq(bugs.reportedBy, userId), eq(bugs.status, 'duplicate')));
+      const dupes = dupesRows[0]?.count ?? 0;
       return dupes >= badge.threshold;
     }
 
     case 'team-player': {
-      const participations = db
+      const participationsRows = await db
         .select({ count: count() })
         .from(sessionParticipants)
-        .where(eq(sessionParticipants.userId, userId))
-        .get()!.count;
+        .where(eq(sessionParticipants.userId, userId));
+      const participations = participationsRows[0]?.count ?? 0;
       return participations >= badge.threshold;
     }
 
     case 'veteran': {
-      const participations = db
+      const participationsRows = await db
         .select({ count: count() })
         .from(sessionParticipants)
-        .where(eq(sessionParticipants.userId, userId))
-        .get()!.count;
+        .where(eq(sessionParticipants.userId, userId));
+      const participations = participationsRows[0]?.count ?? 0;
       return participations >= badge.threshold;
     }
 
     case 'streak-3':
     case 'streak-5': {
-      // Get user's sessions ordered by date
-      const userSessions = db
+      const userSessions = await db
         .select({
           sessionId: sessionParticipants.sessionId,
           createdAt: sessions.createdAt,
@@ -181,32 +176,28 @@ function checkBadgeCondition(
         .from(sessionParticipants)
         .innerJoin(sessions, eq(sessionParticipants.sessionId, sessions.id))
         .where(eq(sessionParticipants.userId, userId))
-        .orderBy(desc(sessions.createdAt))
-        .all();
+        .orderBy(desc(sessions.createdAt));
 
-      // For simplicity, count consecutive sessions (by count, not by date gaps)
       return userSessions.length >= badge.threshold;
     }
 
     case 'script-master': {
       if (!context.sessionId) return false;
-      // Check if user completed all steps of any script in this session
-      const sessionScripts = db
+      const sessionScripts = await db
         .select({ id: testScripts.id })
         .from(testScripts)
-        .where(eq(testScripts.sessionId, context.sessionId))
-        .all();
+        .where(eq(testScripts.sessionId, context.sessionId));
 
       for (const script of sessionScripts) {
-        const totalSteps = db
+        const totalStepsRows = await db
           .select({ count: count() })
           .from(testSteps)
-          .where(eq(testSteps.scriptId, script.id))
-          .get()!.count;
+          .where(eq(testSteps.scriptId, script.id));
+        const totalSteps = totalStepsRows[0]?.count ?? 0;
 
         if (totalSteps === 0) continue;
 
-        const completedSteps = db
+        const completedStepsRows = await db
           .select({ count: count() })
           .from(testStepResults)
           .innerJoin(testSteps, eq(testStepResults.stepId, testSteps.id))
@@ -214,8 +205,8 @@ function checkBadgeCondition(
             eq(testSteps.scriptId, script.id),
             eq(testStepResults.userId, userId),
             eq(testStepResults.sessionId, context.sessionId),
-          ))
-          .get()!.count;
+          ));
+        const completedSteps = completedStepsRows[0]?.count ?? 0;
 
         if (completedSteps >= totalSteps) return true;
       }
@@ -224,23 +215,20 @@ function checkBadgeCondition(
 
     case 'all-rounder': {
       if (!context.sessionId) return false;
-      // Reported bug in session
-      const hasBug = db
+      const hasBugRows = await db
         .select({ id: bugs.id })
         .from(bugs)
-        .where(and(eq(bugs.reportedBy, userId), eq(bugs.sessionId, context.sessionId)))
-        .get();
+        .where(and(eq(bugs.reportedBy, userId), eq(bugs.sessionId, context.sessionId)));
+      const hasBug = hasBugRows[0];
 
-      // Completed test script step
-      const hasStep = db
+      const hasStepRows = await db
         .select({ id: testStepResults.id })
         .from(testStepResults)
-        .where(and(eq(testStepResults.userId, userId), eq(testStepResults.sessionId, context.sessionId)))
-        .get();
+        .where(and(eq(testStepResults.userId, userId), eq(testStepResults.sessionId, context.sessionId)));
+      const hasStep = hasStepRows[0];
 
-      // Participated in triage (has comments on session bugs, or session is in wrapup/closed)
-      // Simple check: user made a comment on a bug in this session
-      const session = db.select({ status: sessions.status }).from(sessions).where(eq(sessions.id, context.sessionId)).get();
+      const sessionRows = await db.select({ status: sessions.status }).from(sessions).where(eq(sessions.id, context.sessionId));
+      const session = sessionRows[0];
       const isTriaged = session?.status === 'wrapup' || session?.status === 'closed';
 
       return !!(hasBug && hasStep && isTriaged);

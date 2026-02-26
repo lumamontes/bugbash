@@ -1,15 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db } from '@db/index';
-import { squads } from '@db/schema';
-import { eq } from 'drizzle-orm';
 
 const user = Astro.locals.user;
 if (!user) return Astro.redirect('/login');
 if (user.onboardingComplete) return Astro.redirect('/');
-
-const orgSquads = db.select({ id: squads.id, name: squads.name }).from(squads).where(eq(squads.orgId, user.orgId)).all();
-const error = Astro.url.searchParams.get('error');
 ---
 
 <Layout title="Bem-vindo — Bug Bash">
@@ -17,28 +11,10 @@ const error = Astro.url.searchParams.get('error');
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-text-primary">Bem-vindo ao Bug Bash!</h1>
-        <p class="text-sm text-text-secondary mt-2">Selecione seu squad para começar</p>
+        <p class="text-sm text-text-secondary mt-2">Tudo pronto para começar</p>
       </div>
 
       <form method="POST" action="/api/auth/onboarding" class="bg-surface-1 rounded-xl border border-surface-3 p-6 space-y-4">
-        {error && (
-          <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-4 py-3">
-            Por favor, selecione um squad.
-          </div>
-        )}
-
-        <div>
-          <label class="block text-sm font-medium text-text-secondary mb-3">Seu Squad</label>
-          <div class="space-y-2">
-            {orgSquads.map(squad => (
-              <label class="flex items-center gap-3 p-3 rounded-lg bg-surface-2 border border-surface-3 hover:border-primary-500 cursor-pointer transition-colors">
-                <input type="radio" name="squadId" value={squad.id} class="text-primary-600 focus:ring-primary-500" />
-                <span class="text-sm text-text-primary font-medium">{squad.name}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
         <button
           type="submit"
           class="w-full bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg px-4 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-surface-1"

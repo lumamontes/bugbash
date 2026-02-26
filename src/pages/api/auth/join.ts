@@ -11,44 +11,42 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   const code = formData.get('code')?.toString()?.trim();
   const name = formData.get('name')?.toString()?.trim();
   const email = formData.get('email')?.toString()?.trim()?.toLowerCase();
-  const squadId = formData.get('squadId')?.toString() || null;
-
   if (!code || !name || !email) {
     return redirect(`/convite/${code}?error=missing_fields`);
   }
 
-  const invite = verifyInvite(code);
+  const invite = await verifyInvite(code);
   if (!invite) {
     return redirect(`/convite/${code}?error=invite_invalid`);
   }
 
   // Check if email already exists
-  const existing = db.select().from(users).where(eq(users.email, email)).get();
-  if (existing) {
+  const existingRows = await db.select().from(users).where(eq(users.email, email));
+  if (existingRows[0]) {
     return redirect(`/convite/${code}?error=email_exists`);
   }
 
   // Get creator's org
-  const creator = db.select().from(users).where(eq(users.id, invite.createdBy)).get();
+  const creatorRows = await db.select().from(users).where(eq(users.id, invite.createdBy));
+  const creator = creatorRows[0];
   if (!creator) {
     return redirect(`/convite/${code}?error=invite_invalid`);
   }
 
   const userId = crypto.randomUUID();
 
-  db.insert(users).values({
+  await db.insert(users).values({
     id: userId,
     name,
     email,
     role: invite.role,
     orgId: creator.orgId,
-    squadId,
     createdAt: new Date(),
-  }).run();
+  });
 
-  incrementInviteUsage(invite.id);
+  await incrementInviteUsage(invite.id);
 
-  const sessionId = createSession(userId);
+  const sessionId = await createSession(userId);
 
   cookies.set(SESSION_COOKIE, sessionId, {
     path: '/',

@@ -1,7 +1,7 @@
 ---
 import AppLayout from '../layouts/app-layout.astro';
 import PageHeader from '@components/ui/PageHeader.astro';
-import BadgeCard from '@components/BadgeCard';
+import BadgeCard from '@components/BadgeCard.astro';
 import { db } from '@db/index';
 import { badgeDefinitions, userBadges, bugs, sessionParticipants } from '@db/schema';
 import { eq, and, count, sql } from 'drizzle-orm';
@@ -9,26 +9,26 @@ import { eq, and, count, sql } from 'drizzle-orm';
 const user = Astro.locals.user!;
 
 // Get all badges
-const allBadges = db.select().from(badgeDefinitions).orderBy(badgeDefinitions.category, badgeDefinitions.tier).all();
+const allBadges = await db.select().from(badgeDefinitions).orderBy(badgeDefinitions.category, badgeDefinitions.tier);
 
 // Get user's earned badges
-const earned = db
+const earned = await db
   .select({
     badgeId: userBadges.badgeId,
     earnedAt: userBadges.earnedAt,
   })
   .from(userBadges)
   .where(eq(userBadges.userId, user.id))
-  .all();
+  ;
 
 const earnedMap = new Map(earned.map(e => [e.badgeId, e.earnedAt]));
 
 // Compute progress for threshold badges
-const totalBugs = db.select({ count: count() }).from(bugs).where(eq(bugs.reportedBy, user.id)).get()!.count;
-const highQualityBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), sql`${bugs.qualityScore} >= 80`)).get()!.count;
-const totalParticipations = db.select({ count: count() }).from(sessionParticipants).where(eq(sessionParticipants.userId, user.id)).get()!.count;
-const blockerBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.severity, 'blocker'))).get()!.count;
-const duplicateBugs = db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.status, 'duplicate'))).get()!.count;
+const totalBugs = (await db.select({ count: count() }).from(bugs).where(eq(bugs.reportedBy, user.id)))[0]!.count;
+const highQualityBugs = (await db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), sql`${bugs.qualityScore} >= 80`)))[0]!.count;
+const totalParticipations = (await db.select({ count: count() }).from(sessionParticipants).where(eq(sessionParticipants.userId, user.id)))[0]!.count;
+const blockerBugs = (await db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.severity, 'blocker'))))[0]!.count;
+const duplicateBugs = (await db.select({ count: count() }).from(bugs).where(and(eq(bugs.reportedBy, user.id), eq(bugs.status, 'duplicate'))))[0]!.count;
 
 function getProgress(slug: string): number {
   switch (slug) {

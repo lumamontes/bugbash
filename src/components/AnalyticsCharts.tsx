@@ -17,11 +17,6 @@ interface SeverityTrend {
   enhancement: number;
 }
 
-interface SquadData {
-  name: string;
-  bugs: number;
-}
-
 interface ReporterData {
   name: string;
   bugs: number;
@@ -37,7 +32,6 @@ interface SourceData {
 interface Props {
   sessionTrend: SessionTrend[];
   severityTrend: SeverityTrend[];
-  squadData: SquadData[];
   topReporters: ReporterData[];
   sourceData: SourceData[];
   resolutionData: SourceData[];
@@ -49,7 +43,7 @@ const tooltipStyle = {
 };
 
 export default function AnalyticsCharts({
-  sessionTrend, severityTrend, squadData, topReporters, sourceData, resolutionData,
+  sessionTrend, severityTrend, topReporters, sourceData, resolutionData,
 }: Props) {
   return (
     <div className="space-y-6">
@@ -93,24 +87,8 @@ export default function AnalyticsCharts({
         </div>
       </div>
 
-      {/* Row 2: Squad leaderboard + Source breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Ranking por Squad</h3>
-          {squadData.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-12">Sem dados</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={squadData} layout="vertical" margin={{ left: 0, right: 20 }}>
-                <XAxis type="number" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} width={120} />
-                <Tooltip {...tooltipStyle} />
-                <Bar dataKey="bugs" fill="#818cf8" radius={[0, 4, 4, 0]} name="Bugs" />
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-
+      {/* Row 2: Source breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
           <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Widget vs Plataforma</h3>
           {sourceData.length === 0 ? (

@@ -1,55 +1,45 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testScripts, testSections, testScenarios, scenarioExecutions, sessionParticipants, users } from '@db/schema';
+import { testScripts, testSections, testScenarios, scenarioExecutions, sessionParticipants, users } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSessionContext } from '@lib/services/helpers';
 
 export const GET: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
-
-  // Get participants
-  const participants = db
+  const participants = await db
     .select({ userId: users.id, userName: users.name })
     .from(sessionParticipants)
     .innerJoin(users, eq(sessionParticipants.userId, users.id))
-    .where(eq(sessionParticipants.sessionId, params.id!))
-    .all();
+    .where(eq(sessionParticipants.sessionId, params.id!));
 
-  // Get all scripts → sections → scenarios
-  const scripts = db.select().from(testScripts).where(eq(testScripts.sessionId, params.id!)).all();
+  const scripts = await db.select().from(testScripts).where(eq(testScripts.sessionId, params.id!));
 
   const sections = [];
   for (const script of scripts) {
-    const scriptSections = db
+    const scriptSections = await db
       .select()
       .from(testSections)
       .where(eq(testSections.scriptId, script.id))
-      .orderBy(testSections.sortOrder)
-      .all();
+      .orderBy(testSections.sortOrder);
 
     for (const section of scriptSections) {
-      const scenarios = db
+      const scenarios = await db
         .select()
         .from(testScenarios)
         .where(eq(testScenarios.sectionId, section.id))
-        .orderBy(testScenarios.sortOrder)
-        .all();
+        .orderBy(testScenarios.sortOrder);
 
-      // Get all executions for scenarios in this section
       const scenarioIds = scenarios.map(s => s.id);
       const executions = scenarioIds.length > 0
-        ? db
+        ? (await db
             .select()
             .from(scenarioExecutions)
-            .where(eq(scenarioExecutions.sessionId, params.id!))
-            .all()
+            .where(eq(scenarioExecutions.sessionId, params.id!)))
             .filter(e => scenarioIds.includes(e.scenarioId))
         : [];
 
-      // Build matrix: scenarioId → userId → status
       const matrix: Record<string, Record<string, string>> = {};
       for (const scenario of scenarios) {
         matrix[scenario.id] = {};
@@ -60,7 +50,6 @@ export const GET: APIRoute = async ({ params, locals }) => {
         }
       }
 
-      // Detect gaps and conflicts
       const gaps: string[] = [];
       const conflicts: string[] = [];
       for (const scenario of scenarios) {

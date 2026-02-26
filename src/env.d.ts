@@ -14,7 +14,6 @@ declare namespace App {
     session: {
       id: string;
       expiresAt: Date;
-      keycloakRefreshToken: string | null;
     } | null;
   }
 }

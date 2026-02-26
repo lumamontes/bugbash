@@ -1,6 +1,6 @@
 import { db } from '@db/index';
 import { authSessions, users } from '@db/schema';
-import { eq, and, gt, like, count } from 'drizzle-orm';
+import { eq, and, gt, count } from 'drizzle-orm';
 import crypto from 'node:crypto';
 
 export const SESSION_COOKIE = 'bugbash_token';
@@ -13,73 +13,44 @@ export const ALLOWED_DOMAINS = [
   'geekie.com',
 ];
 
-export function getAuthMode(): 'local' | 'keycloak' {
-  const mode = import.meta.env.AUTH_MODE || process.env.AUTH_MODE || 'local';
-  return mode === 'keycloak' ? 'keycloak' : 'local';
-}
-
 export function isAllowedDomain(email: string): boolean {
   const domain = email.split('@')[1]?.toLowerCase();
   if (!domain) return false;
   return ALLOWED_DOMAINS.includes(domain);
 }
 
-export function getUserCount(): number {
-  const result = db.select({ value: count() }).from(users).get();
-  return result?.value ?? 0;
+export async function getUserCount(): Promise<number> {
+  const rows = await db.select({ value: count() }).from(users);
+  return rows[0]?.value ?? 0;
 }
 
-export function loginByEmail(email: string) {
-  return db.select().from(users).where(eq(users.email, email.toLowerCase().trim())).get();
+export async function loginByEmail(email: string) {
+  const rows = await db.select().from(users).where(eq(users.email, email.toLowerCase().trim()));
+  return rows[0];
 }
 
-export function createSession(userId: string): string {
+export async function createSession(userId: string): Promise<string> {
   const id = crypto.randomUUID();
   const now = new Date();
   const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS);
 
-  db.insert(authSessions).values({
+  await db.insert(authSessions).values({
     id,
     userId,
     expiresAt,
     createdAt: now,
-  }).run();
+  });
 
   return id;
 }
 
-export function createSessionWithKeycloak(
-  userId: string,
-  accessToken: string,
-  refreshToken: string,
-  tokenExpiresIn: number,
-): string {
-  const id = crypto.randomUUID();
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + SESSION_DURATION_MS);
-  const tokenExpiresAt = new Date(now.getTime() + tokenExpiresIn * 1000);
-
-  db.insert(authSessions).values({
-    id,
-    userId,
-    keycloakAccessToken: accessToken,
-    keycloakRefreshToken: refreshToken,
-    keycloakTokenExpiresAt: tokenExpiresAt,
-    expiresAt,
-    createdAt: now,
-  }).run();
-
-  return id;
-}
-
-export function validateSession(sessionId: string) {
+export async function validateSession(sessionId: string) {
   const now = new Date();
 
-  const result = db
+  const rows = await db
     .select({
       sessionId: authSessions.id,
       expiresAt: authSessions.expiresAt,
-      keycloakRefreshToken: authSessions.keycloakRefreshToken,
       userId: users.id,
       userName: users.name,
       userEmail: users.email,
@@ -93,12 +64,12 @@ export function validateSession(sessionId: string) {
     .where(and(
       eq(authSessions.id, sessionId),
       gt(authSessions.expiresAt, now),
-    ))
-    .get();
+    ));
+
+  const result = rows[0];
 
   if (!result) {
-    // Clean up this expired session
-    db.delete(authSessions).where(eq(authSessions.id, sessionId)).run();
+    await db.delete(authSessions).where(eq(authSessions.id, sessionId));
     return null;
   }
 
@@ -106,7 +77,6 @@ export function validateSession(sessionId: string) {
     session: {
       id: result.sessionId,
       expiresAt: result.expiresAt,
-      keycloakRefreshToken: result.keycloakRefreshToken,
     },
     user: {
       id: result.userId,
@@ -120,6 +90,6 @@ export function validateSession(sessionId: string) {
   };
 }
 
-export function deleteSession(sessionId: string): void {
-  db.delete(authSessions).where(eq(authSessions.id, sessionId)).run();
+export async function deleteSession(sessionId: string): Promise<void> {
+  await db.delete(authSessions).where(eq(authSessions.id, sessionId));
 }

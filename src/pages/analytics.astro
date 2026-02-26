@@ -4,22 +4,22 @@ import PageHeader from '@components/ui/PageHeader.astro';
 import Card from '@components/ui/Card.astro';
 import AnalyticsCharts from '@components/AnalyticsCharts';
 import { db } from '@db/index';
-import { sessions, bugs, users, squads, sessionParticipants, userBadges, badgeDefinitions } from '@db/schema';
+import { sessions, bugs, users, sessionParticipants, userBadges } from '@db/schema';
 import { eq, desc, sql, count } from 'drizzle-orm';
 
 const user = Astro.locals.user!;
 const orgId = user.orgId;
 
 // All sessions ordered by date
-const allSessions = db
+const allSessions = await db
   .select({ id: sessions.id, title: sessions.title, createdAt: sessions.createdAt })
   .from(sessions)
   .where(eq(sessions.orgId, orgId))
   .orderBy(sessions.createdAt)
-  .all();
+  ;
 
 // All bugs with session+reporter info
-const allBugs = db
+const allBugs = await db
   .select({
     id: bugs.id,
     sessionId: bugs.sessionId,
@@ -29,13 +29,12 @@ const allBugs = db
     qualityScore: bugs.qualityScore,
     reporterId: bugs.reportedBy,
     reporterName: users.name,
-    reporterSquadId: users.squadId,
   })
   .from(bugs)
   .innerJoin(sessions, eq(bugs.sessionId, sessions.id))
   .innerJoin(users, eq(bugs.reportedBy, users.id))
   .where(eq(sessions.orgId, orgId))
-  .all();
+  ;
 
 // --- Compute chart data ---
 
@@ -57,14 +56,7 @@ const severityTrend = allSessions.map(s => {
   };
 });
 
-// 3. Squad leaderboard
-const orgSquads = db.select({ id: squads.id, name: squads.name }).from(squads).where(eq(squads.orgId, orgId)).all();
-const squadData = orgSquads.map(sq => {
-  const count = allBugs.filter(b => b.reporterSquadId === sq.id).length;
-  return { name: sq.name, bugs: count };
-}).filter(s => s.bugs > 0).sort((a, b) => b.bugs - a.bugs);
-
-// 4. Top reporters
+// 3. Top reporters
 const reporterMap: Record<string, { name: string; bugs: number; totalQuality: number }> = {};
 allBugs.forEach(b => {
   if (!reporterMap[b.reporterId]) {
@@ -100,15 +92,15 @@ const resolutionData = [
 const totalSessions = allSessions.length;
 const avgBugsPerSession = totalSessions > 0 ? Math.round(totalBugs / totalSessions) : 0;
 const resolutionRate = totalBugs > 0 ? Math.round((fixedBugs / totalBugs) * 100) : 0;
-const totalParticipants = db
+const totalParticipants = (await db
   .select({ count: sql<number>`COUNT(DISTINCT ${sessionParticipants.userId})` })
   .from(sessionParticipants)
   .innerJoin(sessions, eq(sessionParticipants.sessionId, sessions.id))
   .where(eq(sessions.orgId, orgId))
-  .get()!.count;
+)[0]!.count;
 
 // Top badges — users with most badges
-const topBadgeUsers = db
+const topBadgeUsers = await db
   .select({
     userName: users.name,
     badgeCount: sql<number>`COUNT(${userBadges.id})`,
@@ -118,7 +110,7 @@ const topBadgeUsers = db
   .groupBy(users.id)
   .orderBy(sql`COUNT(${userBadges.id}) DESC`)
   .limit(5)
-  .all();
+  ;
 ---
 
 <AppLayout title="Analytics — Bug Bash">
@@ -153,7 +145,6 @@ const topBadgeUsers = db
     <AnalyticsCharts
       sessionTrend={sessionTrend}
       severityTrend={severityTrend}
-      squadData={squadData}
       topReporters={topReporters}
       sourceData={sourceData}
       resolutionData={resolutionData}

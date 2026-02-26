@@ -1,12 +1,12 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { organizations, squads, users } from '@db/schema';
+import { organizations, users } from '@db/schema';
 import { getUserCount, createSession, SESSION_COOKIE } from '@lib/auth';
 import crypto from 'node:crypto';
 
 export const POST: APIRoute = async ({ request, cookies, redirect }) => {
   // Only allow setup if no users exist
-  if (getUserCount() > 0) {
+  if ((await getUserCount()) > 0) {
     return redirect('/entrar');
   }
 
@@ -29,26 +29,15 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
 
   // Create organization
   const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  db.insert(organizations).values({
+  await db.insert(organizations).values({
     id: orgId,
     name: orgName,
     slug,
     createdAt: now,
-  }).run();
-
-  // Create default squads
-  const defaultSquads = ['Engenharia', 'Produto', 'QA'];
-  for (const squadName of defaultSquads) {
-    db.insert(squads).values({
-      id: crypto.randomUUID(),
-      name: squadName,
-      orgId,
-      createdAt: now,
-    }).run();
-  }
+  });
 
   // Create admin user
-  db.insert(users).values({
+  await db.insert(users).values({
     id: userId,
     name,
     email,
@@ -56,10 +45,10 @@ export const POST: APIRoute = async ({ request, cookies, redirect }) => {
     isFirstUser: true,
     orgId,
     createdAt: now,
-  }).run();
+  });
 
   // Create session
-  const sessionId = createSession(userId);
+  const sessionId = await createSession(userId);
 
   cookies.set(SESSION_COOKIE, sessionId, {
     path: '/',

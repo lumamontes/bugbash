@@ -20,7 +20,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify({ error: 'bugId and title required' }), { status: 400 });
   }
 
-  const bug = db.select().from(bugs).where(eq(bugs.id, bugId)).get();
+  const bug = (await db.select().from(bugs).where(eq(bugs.id, bugId)))[0];
   if (!bug) {
     return new Response(JSON.stringify({ error: 'Bug not found' }), { status: 404 });
   }
@@ -33,14 +33,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
 
     // Update bug with Linear issue info
-    db.update(bugs)
+    await db.update(bugs)
       .set({
         linearIssueId: result.issueId,
         linearIssueUrl: result.issueUrl,
         updatedAt: new Date(),
       })
-      .where(eq(bugs.id, bugId))
-      .run();
+      .where(eq(bugs.id, bugId));
 
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' },

@@ -24,11 +24,8 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
-# database
-data/
-*.db
-*.db-journal
-*.db-wal
+# pnpm store
+.pnpm-store/
 
 # uploads
 uploads/

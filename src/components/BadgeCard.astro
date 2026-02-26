@@ -1,0 +1,81 @@
+---
+interface Badge {
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  tier: string;
+  category: string;
+  threshold: number;
+  earned: boolean;
+  earnedAt?: string;
+  progress?: number;
+}
+
+interface Props {
+  badge: Badge;
+}
+
+const { badge } = Astro.props;
+
+const tierColors: Record<string, string> = {
+  bronze: '#cd7f32',
+  silver: '#c0c0c0',
+  gold: '#ffd700',
+  platinum: '#e5e4e2',
+};
+
+const tierLabels: Record<string, string> = {
+  bronze: 'Bronze',
+  silver: 'Prata',
+  gold: 'Ouro',
+  platinum: 'Platina',
+};
+
+const borderColor = badge.earned ? tierColors[badge.tier] || '#6366f1' : '#242430';
+const tierColor = tierColors[badge.tier] || '#6366f1';
+const progressPct = !badge.earned && badge.threshold > 1 && badge.progress !== undefined
+  ? Math.min(100, (badge.progress / badge.threshold) * 100)
+  : 0;
+---
+
+<div
+  class:list={[
+    'relative rounded-xl border-2 p-4 transition-all',
+    badge.earned ? 'bg-[#12121a]' : 'bg-[#12121a]/50 opacity-60 grayscale',
+  ]}
+  style={`border-color: ${borderColor}`}
+>
+  <!-- Tier badge -->
+  <span
+    class="absolute top-2 right-2 text-[10px] font-bold uppercase px-1.5 py-0.5 rounded"
+    style={`background-color: ${tierColor}20; color: ${tierColor}`}
+  >
+    {tierLabels[badge.tier]}
+  </span>
+
+  <div class="text-3xl mb-2">{badge.icon}</div>
+  <h3 class="text-sm font-semibold text-[#f1f5f9] mb-1">{badge.name}</h3>
+  <p class="text-xs text-[#94a3b8]">{badge.description}</p>
+
+  <!-- Progress bar for threshold badges -->
+  {!badge.earned && badge.threshold > 1 && badge.progress !== undefined && (
+    <div class="mt-3">
+      <div class="flex justify-between text-[10px] text-[#64748b] mb-1">
+        <span>{badge.progress}/{badge.threshold}</span>
+      </div>
+      <div class="h-1.5 bg-[#242430] rounded-full overflow-hidden">
+        <div
+          class="h-full rounded-full transition-all"
+          style={`width: ${progressPct}%; background-color: ${tierColor}`}
+        />
+      </div>
+    </div>
+  )}
+
+  {badge.earned && badge.earnedAt && (
+    <p class="text-[10px] text-[#64748b] mt-2">
+      {new Date(badge.earnedAt).toLocaleDateString('pt-BR')}
+    </p>
+  )}
+</div>

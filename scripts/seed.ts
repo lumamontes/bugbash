@@ -1,16 +1,16 @@
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import Database from 'better-sqlite3';
-import { mkdirSync } from 'fs';
+import 'dotenv/config';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
 import * as schema from '../src/db/schema';
 
-const DB_PATH = './data/bugbash.db';
-mkdirSync('data', { recursive: true });
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error('DATABASE_URL is required. Set it in .env');
+  process.exit(1);
+}
 
-const sqlite = new Database(DB_PATH);
-sqlite.pragma('journal_mode = WAL');
-sqlite.pragma('foreign_keys = ON');
-
-const db = drizzle(sqlite, { schema });
+const pool = new Pool({ connectionString });
+const db = drizzle(pool, { schema });
 
 function id() {
   return crypto.randomUUID();
@@ -20,31 +20,47 @@ function ts(daysAgo = 0): Date {
   return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000);
 }
 
-console.log('Seeding database...\n');
+async function seed() {
+  console.log('Seeding database...\n');
 
-// ── Organization ───────────────────────────────────────────────────────────
-const orgId = id();
-db.insert(schema.organizations).values({
-  id: orgId,
-  name: 'Arcotech',
-  slug: 'arcotech',
-  createdAt: ts(90),
-}).run();
+  // ── Reset ────────────────────────────────────────────────────────────────
+  console.log('Clearing existing data...');
+  await pool.query(`
+    TRUNCATE
+      test_resources, test_step_results, test_steps, scenario_executions,
+      test_scenarios, test_sections, test_scripts, test_credentials,
+      bug_tags, bug_evidence, bug_comments, bugs,
+      user_badges, badge_definitions,
+      session_participants, sessions,
+      auth_sessions, invite_links,
+      tags, users, squads, organizations
+    CASCADE
+  `);
+  console.log('Done.\n');
+
+  // ── Organization ───────────────────────────────────────────────────────────
+  const orgId = id();
+  await db.insert(schema.organizations).values({
+    id: orgId,
+    name: 'Arcotech',
+    slug: 'arcotech',
+    createdAt: ts(90),
+  });
 console.log('Created organization: Arcotech');
 
 // ── Squad ─────────────────────────────────────────────────────────────────
 const squadId = id();
-db.insert(schema.squads).values({
+await db.insert(schema.squads).values({
   id: squadId,
   name: 'Onboarding LMS',
   orgId,
   createdAt: ts(90),
-}).run();
+});
 console.log('Created squad: Onboarding LMS');
 
 // ── Admin User ─────────────────────────────────────────────────────────────
 const adminId = id();
-db.insert(schema.users).values({
+await db.insert(schema.users).values({
   id: adminId,
   name: 'Admin',
   email: 'admin@arcotech.com.br',
@@ -52,7 +68,7 @@ db.insert(schema.users).values({
   isFirstUser: true,
   orgId,
   createdAt: ts(90),
-}).run();
+});
 console.log('Created admin: admin@arcotech.com.br');
 
 // ── Tags ───────────────────────────────────────────────────────────────────
@@ -66,18 +82,18 @@ const tagData = [
 ];
 
 for (const t of tagData) {
-  db.insert(schema.tags).values({
+  await db.insert(schema.tags).values({
     id: id(),
     name: t.name,
     color: t.color,
     orgId,
-  }).run();
+  });
 }
 console.log(`Created ${tagData.length} tags`);
 
 // ── Session: Bug Bash Histórico Operacional ───────────────────────────────
 const sessionId = id();
-db.insert(schema.sessions).values({
+await db.insert(schema.sessions).values({
   id: sessionId,
   title: 'Bug Bash Histórico Operacional',
   description: 'Sessão de bug bash para validação do Histórico Operacional no Backoffice. Foco em parametrização de conteúdo, pacotes/produtos, filtros e edge cases.',
@@ -89,23 +105,23 @@ db.insert(schema.sessions).values({
   wrapupDuration: 15,
   widgetEnabled: false,
   createdAt: ts(1),
-}).run();
+});
 console.log('Created session: Bug Bash Histórico Operacional');
 
 // ── Test Script ───────────────────────────────────────────────────────────
 const scriptId = id();
-db.insert(schema.testScripts).values({
+await db.insert(schema.testScripts).values({
   id: scriptId,
   sessionId,
   title: 'Histórico Operacional — Roteiro Completo',
   description: 'Roteiro de testes para validação do Histórico Operacional de Escolas no Backoffice. Cobre parametrização de conteúdo (regras e kits), pacotes/produtos, filtros e edge cases.',
   orderIndex: 0,
   createdAt: ts(1),
-}).run();
+});
 
 // ── Guia 1: Boas-Vindas (informational section) ──────────────────────────
 const guia1Id = id();
-db.insert(schema.testSections).values({
+await db.insert(schema.testSections).values({
   id: guia1Id,
   scriptId,
   title: 'Guia 1: Boas-Vindas',
@@ -120,11 +136,11 @@ IMPORTANTE:
   status: 'active',
   sortOrder: 0,
   createdAt: ts(1),
-}).run();
+});
 
 // ── Guia 2: Parametrização de Conteúdo — Regras ──────────────────────────
 const guia2RegrasId = id();
-db.insert(schema.testSections).values({
+await db.insert(schema.testSections).values({
   id: guia2RegrasId,
   scriptId,
   title: 'Guia 2: Parametrização — Regras',
@@ -132,7 +148,7 @@ db.insert(schema.testSections).values({
   status: 'active',
   sortOrder: 1,
   createdAt: ts(1),
-}).run();
+});
 
 const regrasScenarios = [
   {
@@ -174,7 +190,7 @@ const regrasScenarios = [
 
 for (let i = 0; i < regrasScenarios.length; i++) {
   const sc = regrasScenarios[i];
-  db.insert(schema.testScenarios).values({
+  await db.insert(schema.testScenarios).values({
     id: id(),
     sectionId: guia2RegrasId,
     title: sc.title,
@@ -184,12 +200,12 @@ for (let i = 0; i < regrasScenarios.length; i++) {
     keyRules: sc.keyRules,
     sortOrder: i,
     createdAt: ts(1),
-  }).run();
+  });
 }
 
 // ── Guia 2: Parametrização de Conteúdo — Kits ────────────────────────────
 const guia2KitsId = id();
-db.insert(schema.testSections).values({
+await db.insert(schema.testSections).values({
   id: guia2KitsId,
   scriptId,
   title: 'Guia 2: Parametrização — Kits',
@@ -197,7 +213,7 @@ db.insert(schema.testSections).values({
   status: 'active',
   sortOrder: 2,
   createdAt: ts(1),
-}).run();
+});
 
 const kitsScenarios = [
   {
@@ -239,7 +255,7 @@ const kitsScenarios = [
 
 for (let i = 0; i < kitsScenarios.length; i++) {
   const sc = kitsScenarios[i];
-  db.insert(schema.testScenarios).values({
+  await db.insert(schema.testScenarios).values({
     id: id(),
     sectionId: guia2KitsId,
     title: sc.title,
@@ -249,12 +265,12 @@ for (let i = 0; i < kitsScenarios.length; i++) {
     keyRules: sc.keyRules,
     sortOrder: i,
     createdAt: ts(1),
-  }).run();
+  });
 }
 
 // ── Guia 3: Pacotes e Produtos ────────────────────────────────────────────
 const guia3Id = id();
-db.insert(schema.testSections).values({
+await db.insert(schema.testSections).values({
   id: guia3Id,
   scriptId,
   title: 'Guia 3: Pacotes e Produtos',
@@ -262,25 +278,60 @@ db.insert(schema.testSections).values({
   status: 'active',
   sortOrder: 3,
   createdAt: ts(1),
-}).run();
+});
 
 const pacotesScenarios = [
   {
     title: '11. Vincular pacote à escola',
     precondition: 'Acesso de edição à escola, pacote disponível',
-    stepsToExecute: '1. Editar escola\n2. Adicionar um pacote\n3. Salvar\n4. Aba "Histórico"',
-    expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Direto\n• Resumo: "Recebeu o pacote \'{Nome do Pacote}\'"\nAo abrir os detalhes: lista dos pacotes adicionados com seus nomes.',
+    stepsToExecute: '1. Menu Gestão → Escolas → selecionar escola\n2. Aba "Pacotes"\n3. Clicar em "Adicionar pacotes"\n4. No drawer, marcar um pacote que contenha produtos novos para a escola\n5. Clicar "Salvar" e confirmar no modal\n6. Ir na aba "Histórico" da escola',
+    expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Direto\n• Resumo: indica que a escola recebeu o pacote (e consequentemente acesso aos produtos)\nAo abrir os detalhes: lista dos pacotes adicionados com seus nomes.',
     keyRules: null,
   },
   {
     title: '12. Desvincular pacote da escola',
-    precondition: 'Escola com pacote vinculado',
+    precondition: 'Escola com pacote vinculado (pacote customizado, não padrão)',
     stepsToExecute: '1. Editar escola\n2. Remover um pacote\n3. Salvar\n4. Aba "Histórico"',
     expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Direto\n• Resumo: "Perdeu vínculo com o pacote \'{Nome do Pacote}\'"',
     keyRules: null,
   },
   {
-    title: '13. Falso positivo — alterar permissões de produto dentro de pacote',
+    title: '13. Vincular produto em um pacote',
+    precondition: 'Pacote existente vinculado a escolas',
+    stepsToExecute: '1. Menu Gestão → Pacotes\n2. Clicar em "Editar pacote" no pacote desejado\n3. Na tabela de Produtos, marcar o checkbox de um produto não selecionado\n4. Clicar em "Confirmar"\n5. No modal de confirmação, digitar o nome do pacote e confirmar\n6. Ir na aba "Histórico" de uma escola vinculada a esse pacote',
+    expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Indireto\n• Resumo: indica que o pacote foi atualizado com o produto adicionado\nAo abrir os detalhes: lista do produto adicionado.\nVerificar que a escola vinculada ao pacote agora tem acesso ao novo produto.',
+    keyRules: 'Impacto deve ser Indireto (a alteração foi no pacote, não na escola).',
+  },
+  {
+    title: '14. Desvincular produto de um pacote',
+    precondition: 'Pacote com produtos vinculado a escolas',
+    stepsToExecute: '1. Menu Gestão → Pacotes\n2. Clicar em "Editar pacote" no pacote desejado\n3. Na tabela de Produtos, desmarcar o checkbox de um produto selecionado\n4. Clicar em "Confirmar"\n5. No modal de confirmação, digitar o nome do pacote e confirmar\n6. Ir na aba "Histórico" de uma escola vinculada a esse pacote',
+    expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Indireto\n• Resumo: indica que o pacote foi atualizado com o produto removido\nAo abrir os detalhes: lista do produto removido.\nVerificar que a escola vinculada ao pacote perde acesso ao produto removido.',
+    keyRules: 'Impacto deve ser Indireto.',
+  },
+  {
+    title: '15. Alterar permissão de produto dentro do pacote',
+    precondition: 'Pacote com produtos vinculado a escolas',
+    stepsToExecute: '1. Menu Gestão → Pacotes\n2. Clicar em "Editar pacote"\n3. Na tabela de Produtos, clicar em "Editar permissões" no produto desejado\n4. No drawer de permissões, alterar perfis (ex: marcar/desmarcar "Coordenador") ou séries (ex: marcar/desmarcar "5º ano")\n5. Clicar em "Confirmar" no drawer\n6. Clicar em "Confirmar" no formulário do pacote\n7. Digitar nome do pacote no modal e confirmar\n8. Ir na aba "Histórico" de uma escola vinculada a esse pacote',
+    expectedResult: 'Novo evento aparece na timeline.\n• Impacto: Indireto\n• Resumo: indica que as permissões do produto no pacote foram alteradas\nAo abrir os detalhes: detalhes de perfis/séries alterados.',
+    keyRules: 'Impacto deve ser Indireto.',
+  },
+  {
+    title: '16. Deletar produto',
+    precondition: 'Produto existente vinculado a escolas via pacote',
+    stepsToExecute: '1. Menu Gestão → Produtos\n2. Clicar no menu de ações (⋮) do produto desejado\n3. Selecionar "Excluir produto"\n4. No modal, digitar o nome do produto e clicar "Excluir"\n5. Verificar toast de sucesso\n6. Ir na aba "Histórico" de uma escola que tinha acesso ao produto (via pacote)',
+    expectedResult: 'Toast: "O produto \'{nome}\' foi excluído". O produto desaparece da lista.\nNa escola: novo evento aparece na timeline.\n• Impacto: Indireto\n• Resumo: indica que o produto foi removido.',
+    keyRules: null,
+  },
+  {
+    title: '17. Deletar pacote',
+    precondition: 'Pacote customizado (não padrão) vinculado a escolas',
+    stepsToExecute: '1. Menu Gestão → Pacotes\n2. Clicar no menu de ações (⋮) do pacote desejado (não pode ser pacote padrão)\n3. Selecionar "Excluir pacote"\n4. No modal, digitar o nome do pacote e confirmar\n5. Verificar toast de sucesso\n6. Ir na aba "Histórico" de uma escola que estava vinculada ao pacote',
+    expectedResult: 'Toast: "O pacote \'{nome}\' foi excluído". O pacote desaparece da lista.\nNa escola: novo evento aparece na timeline.\n• Impacto: Direto\n• Resumo: indica que a escola perdeu o vínculo com o pacote.',
+    keyRules: 'Pacotes padrão (standard) não podem ser excluídos — usar pacote customizado.',
+  },
+  {
+    title: '18. Falso positivo — alterar permissões de série/perfil de produto dentro de pacote',
     precondition: 'Pacote vinculado à escola com produtos',
     stepsToExecute: '1. Alterar permissões de série/perfil de um Produto que está dentro de um Pacote associado à escola\n2. Ir na aba "Histórico" da escola',
     expectedResult: 'Nenhum novo evento deve aparecer no histórico da escola.\nAlterações em sub-recursos de pacotes (como permissões de produto) não devem gerar eventos no histórico.',
@@ -290,7 +341,7 @@ const pacotesScenarios = [
 
 for (let i = 0; i < pacotesScenarios.length; i++) {
   const sc = pacotesScenarios[i];
-  db.insert(schema.testScenarios).values({
+  await db.insert(schema.testScenarios).values({
     id: id(),
     sectionId: guia3Id,
     title: sc.title,
@@ -300,12 +351,12 @@ for (let i = 0; i < pacotesScenarios.length; i++) {
     keyRules: sc.keyRules,
     sortOrder: i,
     createdAt: ts(1),
-  }).run();
+  });
 }
 
 // ── Guia 4: Filtros, Navegação e Edge Cases ───────────────────────────────
 const guia4Id = id();
-db.insert(schema.testSections).values({
+await db.insert(schema.testSections).values({
   id: guia4Id,
   scriptId,
   title: 'Guia 4: Filtros, Navegação e Edge Cases',
@@ -313,102 +364,102 @@ db.insert(schema.testSections).values({
   status: 'active',
   sortOrder: 4,
   createdAt: ts(1),
-}).run();
+});
 
 const filtrosScenarios = [
   {
-    title: '14. Filtrar por período',
+    title: '19. Filtrar por período',
     precondition: 'Escola com eventos no histórico',
     stepsToExecute: '1. Testar filtro "Últimos 7 dias"\n2. Testar filtro "Últimos 30 dias"\n3. Testar filtro "Todo o período"\n4. Testar intervalo customizado usando o seletor de datas',
     expectedResult: 'A tabela atualiza corretamente com cada filtro, mostrando apenas os eventos do período selecionado.\nO seletor de datas para intervalo customizado funciona normalmente.',
     keyRules: null,
   },
   {
-    title: '15. Filtrar por origem',
+    title: '20. Filtrar por origem',
     precondition: 'Escola com eventos de diferentes origens',
     stepsToExecute: '1. Filtrar por cada tipo de origem: Usuário, Sistema, Integração, Script, Desconhecida\n2. Observar os ícones na coluna de origem',
     expectedResult: 'Cada filtro mostra apenas os eventos da origem selecionada.\nÍcones corretos: pessoa (Usuário), engrenagem (Sistema/Integração/Script), interrogação (Desconhecida).',
     keyRules: null,
   },
   {
-    title: '16. Filtrar por recurso',
+    title: '21. Filtrar por recurso',
     precondition: 'Escola com eventos de diferentes recursos',
     stepsToExecute: '1. Abrir o filtro de recurso\n2. Filtrar por cada tipo disponível (ex: Parametrizador, Pacote)',
     expectedResult: 'Todos os tipos de recurso aparecem com nomes legíveis em português.\nNão devem aparecer códigos técnicos ou nomes em inglês nos filtros.',
     keyRules: 'Se algum filtro aparecer com nome técnico (ex: código ao invés de nome legível), é bug.',
   },
   {
-    title: '17. Filtrar por impacto',
+    title: '22. Filtrar por impacto',
     precondition: 'Escola com eventos diretos e indiretos',
     stepsToExecute: '1. Filtrar por "Direto"\n2. Filtrar por "Indireto"\n3. Passar o mouse sobre as tags de impacto',
     expectedResult: 'Filtros funcionam corretamente, mostrando apenas eventos do tipo selecionado.\nAs tags de impacto têm cores diferentes para Direto e Indireto.\nAo passar o mouse sobre a tag, aparece um tooltip explicando a diferença entre impacto direto e indireto.',
     keyRules: 'Verificar que o tooltip de explicação aparece ao passar o mouse.',
   },
   {
-    title: '18. Busca por palavra-chave',
+    title: '23. Busca por palavra-chave',
     precondition: 'Escola com eventos variados',
     stepsToExecute: '1. Clicar na barra de busca\n2. Digitar o nome de um kit, regra, pacote ou código conhecido\n3. Aguardar os resultados aparecerem',
     expectedResult: 'Após digitar, a tabela filtra automaticamente (com um pequeno delay).\nOs resultados exibidos contêm a palavra buscada.',
     keyRules: null,
   },
   {
-    title: '19. Stress test — todos os filtros combinados',
+    title: '24. Stress test — todos os filtros combinados',
     precondition: 'Escola com muitos eventos',
     stepsToExecute: '1. Preencher TODOS os filtros ao mesmo tempo:\n   • Palavra-chave (ex: "Matemática")\n   • Período longo\n   • Recurso específico\n   • Origem\n   • Impacto\n2. Observar o tempo de resposta',
     expectedResult: 'Resultados aparecem rapidamente, sem travamentos ou erros.\nA combinação de todos os filtros não causa lentidão perceptível.',
     keyRules: 'Se houver lentidão perceptível ou travamento, reportar como bug de performance.',
   },
   {
-    title: '20. Limpar filtros',
+    title: '25. Limpar filtros',
     precondition: 'Filtros aplicados',
     stepsToExecute: '1. Aplicar múltiplos filtros\n2. Clicar no botão "Limpar filtros"',
     expectedResult: 'Todos os filtros são resetados.\nO painel de detalhes (drawer) fecha, se estiver aberto.\nA tabela volta ao estado inicial mostrando todos os eventos.',
     keyRules: null,
   },
   {
-    title: '21. Navegar entre eventos no drawer',
+    title: '26. Navegar entre eventos no drawer',
     precondition: 'Múltiplos eventos no histórico',
     stepsToExecute: '1. Clicar em um evento para abrir o painel de detalhes\n2. Usar as setas de navegação (anterior/próximo) para navegar entre eventos',
     expectedResult: 'O painel atualiza mostrando os dados do evento correto.\nAs setas ficam desabilitadas quando chega no primeiro ou último evento.\nDurante o carregamento, aparece um indicador de loading.',
     keyRules: null,
   },
   {
-    title: '22. Copiar link do evento',
+    title: '27. Copiar link do evento',
     precondition: 'Evento visível na tabela',
     stepsToExecute: '1. Clicar no ícone de copiar link na tabela\n2. Abrir a URL copiada em uma nova aba do navegador',
     expectedResult: 'A URL é copiada para a área de transferência.\nAo abrir a URL em nova aba, a página carrega diretamente com o painel de detalhes do evento correto aberto.',
     keyRules: 'Testar abrindo a URL copiada em nova aba para confirmar que funciona.',
   },
   {
-    title: '23. Ordenação por data/hora',
+    title: '28. Ordenação por data/hora',
     precondition: 'Múltiplos eventos',
     stepsToExecute: '1. Clicar no cabeçalho "Data e Hora" da tabela\n2. Clicar novamente para alternar a direção',
     expectedResult: 'A tabela reordena entre mais recente primeiro e mais antigo primeiro.\nO padrão é mais recente primeiro.',
     keyRules: null,
   },
   {
-    title: '24. Paginação',
+    title: '29. Paginação',
     precondition: 'Escola com mais de 10 eventos',
     stepsToExecute: '1. Verificar quantos itens aparecem por página\n2. Navegar para a próxima página\n3. Verificar os totais exibidos',
     expectedResult: 'São exibidos 10 itens por página.\nA paginação funciona corretamente (avançar/voltar páginas).\nOs totais exibidos estão corretos.',
     keyRules: null,
   },
   {
-    title: '25. Escola sem histórico',
+    title: '30. Escola sem histórico',
     precondition: 'Escola sem nenhum evento registrado',
     stepsToExecute: '1. Acessar a aba "Histórico" de uma escola que não possui eventos',
     expectedResult: 'Uma mensagem amigável é exibida indicando que não há registros (ex: "Nenhuma ação registrada" ou "Esta escola ainda não possui registros no histórico").\nNão deve aparecer erro ou tabela vazia sem explicação.',
     keyRules: null,
   },
   {
-    title: '26. Evento com ator desconhecido (banner laranja)',
+    title: '31. Evento com ator desconhecido (banner laranja)',
     precondition: 'Escola com eventos antigos (legados)',
     stepsToExecute: '1. Navegar para páginas mais antigas da timeline\n2. Procurar eventos que mostram ícone de interrogação na coluna de origem',
     expectedResult: 'Eventos antigos sem informação de autor mostram:\n• Ícone de interrogação na coluna Origem\n• Banner/alerta informando que não há informação sobre quem realizou a ação\nIsso é comportamento ESPERADO para dados antigos.',
     keyRules: 'NÃO REPORTAR COMO BUG — é comportamento esperado para dados retroativos.',
   },
   {
-    title: '27. Textos humanizados (sem dados técnicos)',
+    title: '32. Textos humanizados (sem dados técnicos)',
     precondition: 'Eventos de diferentes tipos no histórico',
     stepsToExecute: '1. Abrir os detalhes de diferentes tipos de eventos (Pacotes, Regras, Kits)\n2. Ler todos os textos, labels e informações exibidas',
     expectedResult: 'Todos os textos devem estar em linguagem natural e legível.\nNão deve aparecer nenhum dado técnico visível como: JSON, IDs internos, códigos de sistema, ou labels em inglês/não traduzidos.\nAs informações devem estar bem formatadas visualmente.',
@@ -418,7 +469,7 @@ const filtrosScenarios = [
 
 for (let i = 0; i < filtrosScenarios.length; i++) {
   const sc = filtrosScenarios[i];
-  db.insert(schema.testScenarios).values({
+  await db.insert(schema.testScenarios).values({
     id: id(),
     sectionId: guia4Id,
     title: sc.title,
@@ -428,10 +479,37 @@ for (let i = 0; i < filtrosScenarios.length; i++) {
     keyRules: sc.keyRules,
     sortOrder: i,
     createdAt: ts(1),
-  }).run();
+  });
 }
 
-console.log('Created test script with 5 sections and 27 scenarios');
+console.log('Created test script with 5 sections and 32 scenarios');
+
+// ── Dados de Teste (Escolas) ──────────────────────────────────────────────
+const testResourcesData = [
+  // Sala 1: Parametrização (KIT + Rules)
+  { label: 'Escola Parametrizador KIT - Luma', value: 'ID: preencher', group: 'Sala Parametrização', sortOrder: 0 },
+  { label: 'Escola Parametrizador Rules - Luma', value: 'ID: preencher', group: 'Sala Parametrização', sortOrder: 1 },
+  { label: 'Escola Parametrizador KIT - Jessica', value: 'ID: preencher', group: 'Sala Parametrização', sortOrder: 2 },
+  { label: 'Escola Parametrizador Rules - Jessica', value: 'ID: preencher', group: 'Sala Parametrização', sortOrder: 3 },
+  // Sala 2: Pacotes e Produtos
+  { label: 'Escola Pacotes - Jonatas', value: 'ID: preencher', group: 'Sala Pacotes/Produtos', sortOrder: 0 },
+  { label: 'Escola Produtos - Jonatas', value: 'ID: preencher', group: 'Sala Pacotes/Produtos', sortOrder: 1 },
+  { label: 'Escola Pacotes - Isa', value: 'ID: preencher', group: 'Sala Pacotes/Produtos', sortOrder: 2 },
+  { label: 'Escola Produtos - Isa', value: 'ID: preencher', group: 'Sala Pacotes/Produtos', sortOrder: 3 },
+];
+
+for (const res of testResourcesData) {
+  await db.insert(schema.testResources).values({
+    id: id(),
+    sessionId,
+    label: res.label,
+    value: res.value,
+    group: res.group,
+    sortOrder: res.sortOrder,
+    createdAt: ts(1),
+  });
+}
+console.log(`Created ${testResourcesData.length} test resources (escolas de teste)`);
 
 // ── Badge Definitions ─────────────────────────────────────────────────────
 const badges = [
@@ -452,18 +530,24 @@ const badges = [
 ];
 
 for (const badge of badges) {
-  db.insert(schema.badgeDefinitions).values({
+  await db.insert(schema.badgeDefinitions).values({
     id: id(),
     ...badge,
     createdAt: ts(90),
-  }).run();
+  });
 }
 console.log(`Created ${badges.length} badge definitions`);
 
-console.log('\n--- Seed complete ---');
-console.log('\nDemo user (email-only login):');
-console.log('  Admin: admin@arcotech.com.br');
-console.log('\nSession: Bug Bash Histórico Operacional (draft)');
-console.log('Squad: Onboarding LMS');
+  console.log('\n--- Seed complete ---');
+  console.log('\nDemo user (email-only login):');
+  console.log('  Admin: admin@arcotech.com.br');
+  console.log('\nSession: Bug Bash Histórico Operacional (draft)');
+  console.log('Squad: Onboarding LMS');
+}
 
-sqlite.close();
+seed()
+  .then(() => pool.end())
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });

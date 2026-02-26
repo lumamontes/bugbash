@@ -1,15 +1,13 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testScripts, testSteps, testStepResults } from '@db/schema';
+import { testStepResults } from '@db/schema';
 import { eq, and } from 'drizzle-orm';
+import { requireSessionContext, requireUser } from '@lib/services/helpers';
 import crypto from 'node:crypto';
 
 export const POST: APIRoute = async ({ params, request, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
   const body = await request.json();
   const { stepId, status, notes } = body;
@@ -29,32 +27,28 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     });
   }
 
-  // Check if user already has a result for this step
-  const existing = db.select().from(testStepResults)
+  const existing = (await db.select().from(testStepResults)
     .where(and(
       eq(testStepResults.stepId, stepId),
-      eq(testStepResults.userId, user.id),
+      eq(testStepResults.userId, ctx.user.id),
       eq(testStepResults.sessionId, params.id!),
     ))
-    .get();
+    .limit(1))[0];
 
   if (existing) {
-    // Update existing result
-    db.update(testStepResults)
+    await db.update(testStepResults)
       .set({ status, notes: notes || null, completedAt: new Date() })
-      .where(eq(testStepResults.id, existing.id))
-      .run();
+      .where(eq(testStepResults.id, existing.id));
   } else {
-    // Create new result
-    db.insert(testStepResults).values({
+    await db.insert(testStepResults).values({
       id: crypto.randomUUID(),
       stepId,
-      userId: user.id,
+      userId: ctx.user.id,
       sessionId: params.id!,
       status,
       notes: notes || null,
       completedAt: new Date(),
-    }).run();
+    });
   }
 
   return new Response(JSON.stringify({ ok: true }), {
@@ -63,11 +57,10 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
 };
 
 export const GET: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const user = requireUser(locals);
+  if (user instanceof Response) return user;
 
-  // Get all results for this script by the current user
-  const results = db
+  const results = await db
     .select({
       stepId: testStepResults.stepId,
       status: testStepResults.status,
@@ -77,8 +70,7 @@ export const GET: APIRoute = async ({ params, locals }) => {
     .where(and(
       eq(testStepResults.sessionId, params.id!),
       eq(testStepResults.userId, user.id),
-    ))
-    .all();
+    ));
 
   return new Response(JSON.stringify(results), {
     headers: { 'Content-Type': 'application/json' },

@@ -1,15 +1,10 @@
 import type { APIRoute } from 'astro';
-import { db } from '@db/index';
-import { sessions, testCredentials } from '@db/schema';
-import { eq } from 'drizzle-orm';
-import crypto from 'node:crypto';
+import { requireSessionContext } from '@lib/services/helpers';
+import { addCredential } from '@lib/services/sessions';
 
 export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
   const formData = await request.formData();
   const profileType = formData.get('profileType')?.toString()?.trim();
@@ -21,15 +16,7 @@ export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
     return redirect(`/sessions/${params.id}?error=missing_fields`);
   }
 
-  db.insert(testCredentials).values({
-    id: crypto.randomUUID(),
-    sessionId: params.id!,
-    profileType,
-    username,
-    password,
-    environment,
-    createdAt: new Date(),
-  }).run();
+  await addCredential(params.id!, { profileType, username, password, environment });
 
   return redirect(`/sessions/${params.id}`);
 };

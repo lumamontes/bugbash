@@ -2,21 +2,20 @@
 import Layout from '../../layouts/Layout.astro';
 import { verifyInvite } from '@lib/auth/invites';
 import { db } from '@db/index';
-import { squads, users, organizations } from '@db/schema';
+import { users, organizations } from '@db/schema';
 import { eq } from 'drizzle-orm';
 
 const { code } = Astro.params;
-const invite = code ? verifyInvite(code) : null;
+const invite = code ? await verifyInvite(code) : null;
 
 if (!invite) {
   return Astro.redirect('/entrar?error=invite_invalid');
 }
 
 // Get creator's org to show squads
-const creator = db.select().from(users).where(eq(users.id, invite.createdBy)).get();
+const creator = (await db.select().from(users).where(eq(users.id, invite.createdBy)))[0];
 const orgId = creator?.orgId;
-const org = orgId ? db.select().from(organizations).where(eq(organizations.id, orgId)).get() : null;
-const orgSquads = orgId ? db.select().from(squads).where(eq(squads.orgId, orgId)).all() : [];
+const org = orgId ? (await db.select().from(organizations).where(eq(organizations.id, orgId)))[0] : null;
 
 const error = Astro.url.searchParams.get('error');
 
@@ -83,22 +82,6 @@ const roleLabel: Record<string, string> = {
             placeholder="seu@email.com"
           />
         </div>
-
-        {orgSquads.length > 0 && (
-          <div>
-            <label for="squadId" class="block text-sm font-medium text-text-secondary mb-1.5">Squad</label>
-            <select
-              id="squadId"
-              name="squadId"
-              class="w-full bg-surface-2 border border-surface-3 rounded-lg px-3 py-2 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
-              <option value="">Selecionar squad...</option>
-              {orgSquads.map(sq => (
-                <option value={sq.id}>{sq.name}</option>
-              ))}
-            </select>
-          </div>
-        )}
 
         <button
           type="submit"

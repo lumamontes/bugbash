@@ -12,7 +12,7 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
-  const results = db
+  const results = await db
     .select({
       id: users.id,
       name: users.name,
@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ url }) => {
     .from(users)
     .where(like(users.email, `${q}%`))
     .limit(10)
-    .all();
+    ;
 
   return new Response(JSON.stringify(results), {
     headers: { 'Content-Type': 'application/json' },

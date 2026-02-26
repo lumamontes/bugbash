@@ -2,52 +2,24 @@
 import AppLayout from '../../../layouts/app-layout.astro';
 import Card from '@components/ui/Card.astro';
 import Badge from '@components/ui/Badge.astro';
+import StatsGrid from '@components/ui/StatsGrid.astro';
 import ReportCharts from '@components/ReportCharts';
 import { db } from '@db/index';
-import { sessions, bugs, sessionParticipants, testScripts, testSteps, testStepResults, users, squads, userBadges, badgeDefinitions } from '@db/schema';
-import { eq, count, sql, desc, and } from 'drizzle-orm';
-import { sessionStatusLabel, bugSeverityLabel, bugStatusLabel, formatDate, formatDateTime } from '@lib/format';
+import { testScripts, testSteps, testStepResults, userBadges, badgeDefinitions, users } from '@db/schema';
+import { eq, count } from 'drizzle-orm';
+import { bugSeverityLabel, bugStatusLabel, formatDate } from '@lib/format';
+import { getSessionWithCreator, getSessionCounts, getBugsListWithType } from '@lib/services/sessions';
 
 const user = Astro.locals.user!;
 const { id } = Astro.params;
 
-const session = db
-  .select({
-    id: sessions.id,
-    title: sessions.title,
-    description: sessions.description,
-    status: sessions.status,
-    orgId: sessions.orgId,
-    startedAt: sessions.startedAt,
-    endedAt: sessions.endedAt,
-    createdAt: sessions.createdAt,
-    creatorName: users.name,
-  })
-  .from(sessions)
-  .innerJoin(users, eq(sessions.createdBy, users.id))
-  .where(eq(sessions.id, id!))
-  .get();
+const session = await getSessionWithCreator(id!);
+if (!session || session.orgId !== user.orgId) return Astro.redirect('/sessions');
 
-if (!session || session.orgId !== user.orgId) {
-  return Astro.redirect('/sessions');
-}
-
-// Bug stats
-const allBugs = db
-  .select({
-    id: bugs.id,
-    title: bugs.title,
-    severity: bugs.severity,
-    status: bugs.status,
-    type: bugs.type,
-    reporterName: users.name,
-    createdAt: bugs.createdAt,
-  })
-  .from(bugs)
-  .innerJoin(users, eq(bugs.reportedBy, users.id))
-  .where(eq(bugs.sessionId, id!))
-  .orderBy(desc(bugs.createdAt))
-  .all();
+const [{ participantsCount }, allBugs] = await Promise.all([
+  getSessionCounts(id!),
+  getBugsListWithType(id!),
+]);
 
 const totalBugs = allBugs.length;
 
@@ -74,9 +46,9 @@ const statusColors: Record<string, string> = {
   duplicate: '#94a3b8',
 };
 
-const statusData = Object.entries(statusCounts).map(([status, count]) => ({
+const statusData = Object.entries(statusCounts).map(([status, cnt]) => ({
   name: bugStatusLabel(status),
-  value: count,
+  value: cnt,
   color: statusColors[status] || '#6366f1',
 }));
 
@@ -84,31 +56,37 @@ const statusData = Object.entries(statusCounts).map(([status, count]) => ({
 const reporterCounts: Record<string, number> = {};
 allBugs.forEach(b => { reporterCounts[b.reporterName] = (reporterCounts[b.reporterName] || 0) + 1; });
 const reporterData = Object.entries(reporterCounts)
-  .map(([name, count]) => ({ name, count }))
+  .map(([name, cnt]) => ({ name, count: cnt }))
   .sort((a, b) => b.count - a.count);
 
-// Participant count
-const participantsCount = db.select({ count: count() }).from(sessionParticipants).where(eq(sessionParticipants.sessionId, id!)).get()!.count;
-
-// Test coverage: count steps completed by anyone / total steps
-const totalSteps = db
+// Test coverage
+const totalSteps = (await db
   .select({ count: count() })
   .from(testSteps)
   .innerJoin(testScripts, eq(testSteps.scriptId, testScripts.id))
   .where(eq(testScripts.sessionId, id!))
-  .get()!.count;
+)[0]!.count;
 
-const completedSteps = db
+const completedSteps = await db
   .select({ stepId: testStepResults.stepId })
   .from(testStepResults)
-  .where(eq(testStepResults.sessionId, id!))
-  .all();
+  .where(eq(testStepResults.sessionId, id!));
 const uniqueCompletedSteps = new Set(completedSteps.map(r => r.stepId)).size;
 const coveragePercent = totalSteps > 0 ? Math.round((uniqueCompletedSteps / totalSteps) * 100) : 0;
 
 // Session duration
+let durationStr = '—';
+if (session.startedAt && session.endedAt) {
+  const diffMin = Math.round((session.endedAt.getTime() - session.startedAt.getTime()) / 60000);
+  if (diffMin < 60) {
+    durationStr = `${diffMin} min`;
+  } else {
+    durationStr = `${Math.floor(diffMin / 60)}h ${diffMin % 60}min`;
+  }
+}
+
 // Badges earned in this session
-const sessionBadges = db
+const sessionBadges = await db
   .select({
     userName: users.name,
     badgeName: badgeDefinitions.name,
@@ -120,18 +98,7 @@ const sessionBadges = db
   .innerJoin(users, eq(userBadges.userId, users.id))
   .innerJoin(badgeDefinitions, eq(userBadges.badgeId, badgeDefinitions.id))
   .where(eq(userBadges.sessionId, id!))
-  .orderBy(userBadges.earnedAt)
-  .all();
-
-let durationStr = '—';
-if (session.startedAt && session.endedAt) {
-  const diffMin = Math.round((session.endedAt.getTime() - session.startedAt.getTime()) / 60000);
-  if (diffMin < 60) {
-    durationStr = `${diffMin} min`;
-  } else {
-    durationStr = `${Math.floor(diffMin / 60)}h ${diffMin % 60}min`;
-  }
-}
+  .orderBy(userBadges.earnedAt);
 ---
 
 <AppLayout title={`Relatório — ${session.title}`}>
@@ -155,30 +122,15 @@ if (session.startedAt && session.endedAt) {
     </div>
 
     <!-- Summary Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-      <Card class="!p-4">
-        <p class="text-text-muted text-xs font-medium">Total de Bugs</p>
-        <p class="text-2xl font-bold text-text-primary mt-1">{totalBugs}</p>
-      </Card>
-      <Card class="!p-4">
-        <p class="text-text-muted text-xs font-medium">Participantes</p>
-        <p class="text-2xl font-bold text-text-primary mt-1">{participantsCount}</p>
-      </Card>
-      <Card class="!p-4">
-        <p class="text-text-muted text-xs font-medium">Cobertura</p>
-        <p class="text-2xl font-bold text-text-primary mt-1">{coveragePercent}%</p>
-      </Card>
-      <Card class="!p-4">
-        <p class="text-text-muted text-xs font-medium">Duração</p>
-        <p class="text-2xl font-bold text-text-primary mt-1">{durationStr}</p>
-      </Card>
-      <Card class="!p-4">
-        <p class="text-text-muted text-xs font-medium">Status</p>
-        <div class="mt-1">
-          <Badge variant="session-status" value={session.status}>{sessionStatusLabel(session.status)}</Badge>
-        </div>
-      </Card>
-    </div>
+    <StatsGrid
+      stats={[
+        { label: 'Total de Bugs', value: totalBugs },
+        { label: 'Participantes', value: participantsCount },
+        { label: 'Cobertura', value: `${coveragePercent}%` },
+        { label: 'Duração', value: durationStr },
+      ]}
+      class="mb-8"
+    />
 
     <!-- Charts -->
     <div class="mb-8">

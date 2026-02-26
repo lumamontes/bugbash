@@ -9,7 +9,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const trigger = body.trigger || 'bug_created';
   const context = body.context || {};
 
-  const earned = evaluateBadges(user.id, trigger, context);
+  const earned = await evaluateBadges(user.id, trigger, context);
 
   return new Response(JSON.stringify({ earned }), {
     headers: { 'Content-Type': 'application/json' },

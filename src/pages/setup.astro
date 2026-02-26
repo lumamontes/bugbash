@@ -3,7 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import { getUserCount } from '@lib/auth';
 
 // If users exist, redirect away
-if (getUserCount() > 0) {
+if ((await getUserCount()) > 0) {
   return Astro.redirect('/entrar');
 }
 

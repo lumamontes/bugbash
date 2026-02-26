@@ -7,7 +7,7 @@ export function generateInviteCode(): string {
   return crypto.randomBytes(6).toString('base64url');
 }
 
-export function createInvite(opts: {
+export async function createInvite(opts: {
   createdBy: string;
   role: 'participant' | 'facilitator' | 'admin';
   maxUses?: number;
@@ -16,7 +16,7 @@ export function createInvite(opts: {
   const id = crypto.randomUUID();
   const code = generateInviteCode();
 
-  db.insert(inviteLinks).values({
+  await db.insert(inviteLinks).values({
     id,
     code,
     createdBy: opts.createdBy,
@@ -26,19 +26,20 @@ export function createInvite(opts: {
     expiresAt: opts.expiresAt ?? null,
     isActive: true,
     createdAt: new Date(),
-  }).run();
+  });
 
   return { id, code };
 }
 
-export function verifyInvite(code: string) {
-  const invite = db.select().from(inviteLinks).where(
+export async function verifyInvite(code: string) {
+  const rows = await db.select().from(inviteLinks).where(
     and(
       eq(inviteLinks.code, code),
       eq(inviteLinks.isActive, true),
     )
-  ).get();
+  );
 
+  const invite = rows[0];
   if (!invite) return null;
 
   // Check expiry
@@ -54,26 +55,25 @@ export function verifyInvite(code: string) {
   return invite;
 }
 
-export function incrementInviteUsage(id: string) {
-  const invite = db.select().from(inviteLinks).where(eq(inviteLinks.id, id)).get();
+export async function incrementInviteUsage(id: string) {
+  const rows = await db.select().from(inviteLinks).where(eq(inviteLinks.id, id));
+  const invite = rows[0];
   if (!invite) return;
 
-  db.update(inviteLinks)
+  await db.update(inviteLinks)
     .set({ timesUsed: invite.timesUsed + 1 })
-    .where(eq(inviteLinks.id, id))
-    .run();
+    .where(eq(inviteLinks.id, id));
 }
 
-export function deactivateInvite(id: string) {
-  db.update(inviteLinks)
+export async function deactivateInvite(id: string) {
+  await db.update(inviteLinks)
     .set({ isActive: false })
-    .where(eq(inviteLinks.id, id))
-    .run();
+    .where(eq(inviteLinks.id, id));
 }
 
-export function listInvites(createdBy?: string) {
+export async function listInvites(createdBy?: string) {
   if (createdBy) {
-    return db.select().from(inviteLinks).where(eq(inviteLinks.createdBy, createdBy)).all();
+    return await db.select().from(inviteLinks).where(eq(inviteLinks.createdBy, createdBy));
   }
-  return db.select().from(inviteLinks).all();
+  return await db.select().from(inviteLinks);
 }

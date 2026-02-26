@@ -53,7 +53,6 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
   const [expandedScenario, setExpandedScenario] = useState<string | null>(null);
   const [executions, setExecutions] = useState<Record<string, Execution>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
-  const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [otherExecutions, setOtherExecutions] = useState<Record<string, string[]>>({});
 
   // Load existing executions
@@ -86,26 +85,46 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
     const comment = comments[scenarioId] || '';
 
     if ((status === 'partial' || status === 'blocked') && !comment.trim()) {
-      // Focus comment field
       const el = document.getElementById(`comment-${scenarioId}`);
       el?.focus();
       return;
     }
 
-    setLoading(prev => ({ ...prev, [scenarioId]: true }));
+    // Optimistic update — show selection immediately
+    const previousExecution = executions[scenarioId];
+    setExecutions(prev => ({ ...prev, [scenarioId]: { scenarioId, status, comment } }));
+
     try {
       const res = await fetch(`/api/sessions/${sessionId}/scenarios/${scenarioId}/execute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, comment: comment || undefined }),
       });
-      if (res.ok) {
-        setExecutions(prev => ({ ...prev, [scenarioId]: { scenarioId, status, comment } }));
+      if (!res.ok) {
+        // Rollback on failure
+        setExecutions(prev => {
+          const next = { ...prev };
+          if (previousExecution) {
+            next[scenarioId] = previousExecution;
+          } else {
+            delete next[scenarioId];
+          }
+          return next;
+        });
       }
-    } finally {
-      setLoading(prev => ({ ...prev, [scenarioId]: false }));
+    } catch {
+      // Rollback on network error
+      setExecutions(prev => {
+        const next = { ...prev };
+        if (previousExecution) {
+          next[scenarioId] = previousExecution;
+        } else {
+          delete next[scenarioId];
+        }
+        return next;
+      });
     }
-  }, [sessionId, comments]);
+  }, [sessionId, comments, executions]);
 
   const activeSection = sections.find(s => s.id === activeSectionId);
   const activeSections = sections.filter(s => s.status === 'active');
@@ -214,7 +233,6 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                     const exec = executions[scenario.id];
                     const isExpanded = expandedScenario === scenario.id;
                     const depMet = isDependencyMet(scenario);
-                    const isLoading = loading[scenario.id];
                     const othersCount = otherExecutions[scenario.id]?.length || 0;
 
                     return (
@@ -316,7 +334,6 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                                 <button
                                   key={status}
                                   onClick={() => handleExecute(scenario.id, status)}
-                                  disabled={isLoading}
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
                                     exec?.status === status
                                       ? 'ring-1 ring-current scale-105'

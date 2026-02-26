@@ -11,21 +11,18 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
   const name = form.get('name')?.toString()?.trim();
   const email = form.get('email')?.toString()?.trim()?.toLowerCase();
   const role = form.get('role')?.toString() as 'participant' | 'facilitator' | 'admin';
-  const squadId = form.get('squadId')?.toString() || null;
-
   if (!name || !email) {
     return redirect('/settings', 303);
   }
 
-  db.insert(users).values({
+  await db.insert(users).values({
     id: crypto.randomUUID(),
     name,
     email,
     role: role || 'participant',
     orgId: user.orgId,
-    squadId,
     createdAt: new Date(),
-  }).run();
+  });
 
   return redirect('/settings', 303);
 };

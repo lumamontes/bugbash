@@ -4,23 +4,22 @@ import PageHeader from '@components/ui/PageHeader.astro';
 import Card from '@components/ui/Card.astro';
 import BugReportForm from '@components/BugReportForm';
 import { db } from '@db/index';
-import { sessions, testScripts, testSteps, testScenarios, testSections } from '@db/schema';
+import { testScenarios, testSections } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { getSessionOrNull } from '@lib/services/helpers';
+import { getScriptsWithSteps } from '@lib/services/sessions';
 
 const user = Astro.locals.user!;
 const { id } = Astro.params;
 
-const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
-if (!session || session.orgId !== user.orgId) {
-  return Astro.redirect('/sessions');
-}
+const session = await getSessionOrNull(id!, user.orgId);
+if (!session) return Astro.redirect('/sessions');
 
 // Get test steps for optional linking (legacy)
-const scripts = db.select({ id: testScripts.id, title: testScripts.title }).from(testScripts).where(eq(testScripts.sessionId, id!)).all();
-const steps = scripts.flatMap(script => {
-  const scriptSteps = db.select({ id: testSteps.id, instruction: testSteps.instruction }).from(testSteps).where(eq(testSteps.scriptId, script.id)).all();
-  return scriptSteps.map(s => ({ ...s, scriptTitle: script.title }));
-});
+const scriptsWithSteps = await getScriptsWithSteps(id!);
+const steps = scriptsWithSteps.flatMap(script =>
+  script.steps.map(s => ({ ...s, scriptTitle: script.title }))
+);
 
 // Check for scenario context from query params
 const scenarioId = Astro.url.searchParams.get('scenarioId');
@@ -30,8 +29,8 @@ const defaultType = Astro.url.searchParams.get('type') || undefined;
 
 let scenarioContext = null;
 if (scenarioId && sectionId) {
-  const scenario = db.select().from(testScenarios).where(eq(testScenarios.id, scenarioId)).get();
-  const section = db.select().from(testSections).where(eq(testSections.id, sectionId)).get();
+  const scenario = (await db.select().from(testScenarios).where(eq(testScenarios.id, scenarioId)))[0];
+  const section = (await db.select().from(testSections).where(eq(testSections.id, sectionId)))[0];
   if (scenario && section) {
     scenarioContext = {
       scenarioId: scenario.id,

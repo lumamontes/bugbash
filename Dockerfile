@@ -1,6 +1,5 @@
 FROM node:20-slim AS base
 
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
@@ -17,7 +16,6 @@ RUN pnpm build
 # Production stage — includes dev deps for seeding
 FROM node:20-slim AS production
 
-RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /app
@@ -33,8 +31,8 @@ COPY --from=base /app/src ./src
 COPY --from=base /app/tsconfig.json ./tsconfig.json
 COPY --from=base /app/drizzle.config.ts ./drizzle.config.ts
 
-# Data and uploads directories (mount volumes here)
-RUN mkdir -p /app/data /app/uploads
+# Uploads directory (mount volume here)
+RUN mkdir -p /app/uploads
 
 ENV HOST=0.0.0.0
 ENV NODE_ENV=production

@@ -15,22 +15,22 @@ export const POST: APIRoute = async ({ request, locals, redirect }) => {
     const squadId = form.get('squadId')?.toString();
     if (!squadId) return new Response('Missing squadId', { status: 400 });
 
-    const squad = db.select().from(squads).where(eq(squads.id, squadId)).get();
+    const squad = (await db.select().from(squads).where(eq(squads.id, squadId)))[0];
     if (!squad || squad.orgId !== user.orgId) return new Response('Not found', { status: 404 });
 
-    db.delete(squads).where(eq(squads.id, squadId)).run();
+    await db.delete(squads).where(eq(squads.id, squadId));
     return redirect('/settings', 303);
   }
 
   const name = form.get('name')?.toString()?.trim();
   if (!name) return redirect('/settings', 303);
 
-  db.insert(squads).values({
+  await db.insert(squads).values({
     id: crypto.randomUUID(),
     name,
     orgId: user.orgId,
     createdAt: new Date(),
-  }).run();
+  });
 
   return redirect('/settings', 303);
 };

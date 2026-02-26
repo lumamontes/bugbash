@@ -1,15 +1,10 @@
 import type { APIRoute } from 'astro';
-import { db } from '@db/index';
-import { sessions, sessionParticipants } from '@db/schema';
-import { eq, and } from 'drizzle-orm';
-import crypto from 'node:crypto';
+import { requireSessionContext } from '@lib/services/helpers';
+import { addParticipant, removeParticipant } from '@lib/services/sessions';
 
 export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
   const contentType = request.headers.get('content-type') || '';
   let userId: string | undefined;
@@ -24,12 +19,7 @@ export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
     if (method === 'DELETE') {
       userId = formData.get('userId')?.toString();
       if (userId) {
-        db.delete(sessionParticipants)
-          .where(and(
-            eq(sessionParticipants.sessionId, params.id!),
-            eq(sessionParticipants.userId, userId),
-          ))
-          .run();
+        await removeParticipant(params.id!, userId);
       }
       return redirect(`/sessions/${params.id}`);
     }
@@ -40,19 +30,7 @@ export const POST: APIRoute = async ({ params, request, locals, redirect }) => {
     return new Response('Missing userId', { status: 400 });
   }
 
-  // Check if already a participant
-  const existing = db.select().from(sessionParticipants)
-    .where(and(eq(sessionParticipants.sessionId, params.id!), eq(sessionParticipants.userId, userId)))
-    .get();
-
-  if (!existing) {
-    db.insert(sessionParticipants).values({
-      id: crypto.randomUUID(),
-      sessionId: params.id!,
-      userId,
-      joinedAt: new Date(),
-    }).run();
-  }
+  await addParticipant(params.id!, userId);
 
   if (contentType.includes('application/json')) {
     return new Response(JSON.stringify({ ok: true }), {

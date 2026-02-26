@@ -1,13 +1,13 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testSections, testScenarios } from '@db/schema';
+import { testScenarios } from '@db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { requireUser } from '@lib/services/helpers';
 import crypto from 'node:crypto';
 
-// POST: create a scenario in a section
 export const POST: APIRoute = async ({ params, request, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const user = requireUser(locals);
+  if (user instanceof Response) return user;
 
   const body = await request.json();
   const { title, precondition, stepsToExecute, expectedResult, keyRules, dependsOn, persona } = body;
@@ -16,13 +16,13 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     return new Response(JSON.stringify({ error: 'title required' }), { status: 400 });
   }
 
-  const maxOrder = db.select({ max: sql<number>`COALESCE(MAX(sort_order), -1)` })
+  const maxOrder = (await db.select({ max: sql<number>`COALESCE(MAX(sort_order), -1)` })
     .from(testScenarios)
     .where(eq(testScenarios.sectionId, params.sectionId!))
-    .get()!.max;
+  )[0]!.max;
 
   const scenarioId = crypto.randomUUID();
-  db.insert(testScenarios).values({
+  await db.insert(testScenarios).values({
     id: scenarioId,
     sectionId: params.sectionId!,
     title,
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ params, request, locals }) => {
     persona: persona || null,
     sortOrder: maxOrder + 1,
     createdAt: new Date(),
-  }).run();
+  });
 
   return new Response(JSON.stringify({ id: scenarioId }), {
     headers: { 'Content-Type': 'application/json' },

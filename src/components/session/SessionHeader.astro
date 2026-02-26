@@ -1,0 +1,52 @@
+---
+import Badge from '@components/ui/Badge.astro';
+import SessionStatusControl from '@components/SessionStatusControl';
+import { sessionStatusLabel, formatDate, formatDateTime } from '@lib/format';
+
+interface Props {
+  session: {
+    id: string;
+    title: string;
+    description: string | null;
+    status: string;
+    createdBy: string;
+    scheduledAt: Date | null;
+    startedAt: Date | null;
+    endedAt: Date | null;
+    creatorName: string;
+    createdAt: Date;
+  };
+  isFacilitator: boolean;
+  isWrapupPhase: boolean;
+  isClosed: boolean;
+}
+
+const { session, isFacilitator, isWrapupPhase, isClosed } = Astro.props;
+---
+
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <div class="flex items-center gap-3 mb-2">
+      <a href="/sessions" class="text-text-muted hover:text-text-primary text-sm">&larr; Sessões</a>
+    </div>
+    <h1 class="text-2xl font-bold text-text-primary">{session.title}</h1>
+    <div class="flex items-center gap-3 mt-2">
+      <Badge variant="session-status" value={session.status}>{sessionStatusLabel(session.status)}</Badge>
+      <span class="text-text-muted text-sm">Criado por {session.creatorName} em {formatDate(session.createdAt)}</span>
+    </div>
+    {session.description && <p class="text-text-secondary mt-3 max-w-2xl whitespace-pre-line">{session.description}</p>}
+    {session.scheduledAt && <p class="text-text-muted text-sm mt-2">Agendada para {formatDateTime(session.scheduledAt)}</p>}
+    {session.startedAt && <p class="text-text-muted text-sm">Iniciada em {formatDateTime(session.startedAt)}</p>}
+    {session.endedAt && <p class="text-text-muted text-sm">Finalizada em {formatDateTime(session.endedAt)}</p>}
+  </div>
+  {isFacilitator && (
+    <div class="flex items-center gap-3">
+      {(isClosed || isWrapupPhase) && (
+        <a href={`/sessions/${session.id}/report`} class="inline-flex items-center px-4 py-2 bg-surface-2 border border-surface-3 hover:bg-surface-3 text-text-primary text-sm font-medium rounded-lg transition-colors">
+          Relatório
+        </a>
+      )}
+      <SessionStatusControl sessionId={session.id} currentStatus={session.status} client:load />
+    </div>
+  )}
+</div>

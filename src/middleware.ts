@@ -35,7 +35,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Zero users → redirect to setup
-  const userCount = getUserCount();
+  const userCount = await getUserCount();
   if (userCount === 0) {
     return context.redirect('/setup');
   }
@@ -46,7 +46,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return context.redirect('/entrar');
   }
 
-  const result = validateSession(sessionId);
+  const result = await validateSession(sessionId);
 
   if (!result) {
     context.cookies.delete(SESSION_COOKIE, { path: '/' });

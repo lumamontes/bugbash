@@ -1,14 +1,12 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
-import { sessions, testScripts, testSteps } from '@db/schema';
+import { testScripts, testSteps } from '@db/schema';
 import { eq } from 'drizzle-orm';
+import { requireSessionContext } from '@lib/services/helpers';
 
 export const PUT: APIRoute = async ({ params, request, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
   const body = await request.json();
   const updates: Record<string, unknown> = {};
@@ -16,7 +14,7 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
   if (body.description !== undefined) updates.description = body.description;
 
   if (Object.keys(updates).length > 0) {
-    db.update(testScripts).set(updates).where(eq(testScripts.id, params.scriptId!)).run();
+    await db.update(testScripts).set(updates).where(eq(testScripts.id, params.scriptId!));
   }
 
   return new Response(JSON.stringify({ ok: true }), {
@@ -25,15 +23,11 @@ export const PUT: APIRoute = async ({ params, request, locals }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, locals }) => {
-  const user = locals.user;
-  if (!user) return new Response('Unauthorized', { status: 401 });
+  const ctx = await requireSessionContext(locals, params.id!);
+  if (ctx.error) return ctx.error;
 
-  const session = db.select().from(sessions).where(eq(sessions.id, params.id!)).get();
-  if (!session || session.orgId !== user.orgId) return new Response('Not found', { status: 404 });
-
-  // Delete steps first, then script
-  db.delete(testSteps).where(eq(testSteps.scriptId, params.scriptId!)).run();
-  db.delete(testScripts).where(eq(testScripts.id, params.scriptId!)).run();
+  await db.delete(testSteps).where(eq(testSteps.scriptId, params.scriptId!));
+  await db.delete(testScripts).where(eq(testScripts.id, params.scriptId!));
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json' },

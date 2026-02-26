@@ -1,0 +1,241 @@
+---
+import Badge from '@components/ui/Badge.astro';
+import Card from '@components/ui/Card.astro';
+import TestScriptExecution from '@components/TestScriptExecution';
+import SessionExecution from '@components/SessionExecution';
+import CoverageMatrix from '@components/CoverageMatrix';
+import SessionTimer from '@components/SessionTimer';
+import LiveBugFeed from '@components/LiveBugFeed';
+import TriageTable from '@components/TriageTable';
+import SessionHeader from './SessionHeader.astro';
+import StatsGrid from '@components/ui/StatsGrid.astro';
+import CredentialsCard from './CredentialsCard.astro';
+import TestResourcesCard from './TestResourcesCard.astro';
+import { bugSeverityLabel, bugStatusLabel, formatDate } from '@lib/format';
+
+interface Props {
+  session: any;
+  user: any;
+  bugsList: any[];
+  credentialsList: any[];
+  resourcesList: any[];
+  participantsList: any[];
+  scriptsWithSteps: any[];
+  sectionsList: any[];
+  counts: {
+    participantsCount: number;
+    bugsCount: number;
+    scriptsCount: number;
+    credentialsCount: number;
+  };
+}
+
+const { session, user, bugsList, credentialsList, resourcesList, participantsList, scriptsWithSteps, sectionsList, counts } = Astro.props;
+
+const isActiveSession = ['kickoff', 'execution', 'wrapup'].includes(session.status);
+const isExecutionPhase = session.status === 'execution';
+const isWrapupPhase = session.status === 'wrapup';
+const isClosed = session.status === 'closed';
+const hasNewTestingJourney = sectionsList.length > 0;
+---
+
+<div class="p-8">
+  <SessionHeader session={session} isFacilitator={true} isWrapupPhase={isWrapupPhase} isClosed={isClosed} />
+
+  <!-- Timer (during active phases) -->
+  {isActiveSession && (
+    <div class="mb-6">
+      <SessionTimer
+        status={session.status}
+        startedAt={session.startedAt?.toISOString() ?? null}
+        kickoffDuration={session.kickoffDuration ?? 15}
+        executionDuration={session.executionDuration ?? 60}
+        wrapupDuration={session.wrapupDuration ?? 15}
+        client:load
+      />
+    </div>
+  )}
+
+  <!-- Stats Row -->
+  <StatsGrid
+    stats={[
+      { label: 'Participantes', value: counts.participantsCount },
+      { label: 'Bugs', value: counts.bugsCount },
+      { label: 'Scripts', value: counts.scriptsCount },
+      { label: 'Credenciais', value: counts.credentialsCount },
+    ]}
+    class="mb-8"
+  />
+
+  <!-- Execution Layout -->
+  {isExecutionPhase ? (
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2">
+        <Card>
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-text-primary">Execução de Testes</h2>
+            <div class="flex items-center gap-2">
+              {hasNewTestingJourney && (
+                <a href={`/sessions/${session.id}/script-builder`} class="inline-flex items-center px-3 py-1.5 bg-surface-2 hover:bg-surface-3 text-text-secondary text-xs font-medium rounded-lg transition-colors">
+                  Editar Roteiro
+                </a>
+              )}
+              <a href={`/sessions/${session.id}/bugs/new`} class="inline-flex items-center px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-xs font-medium rounded-lg transition-colors">
+                Reportar Bug
+              </a>
+            </div>
+          </div>
+          {hasNewTestingJourney ? (
+            <SessionExecution sessionId={session.id} userId={user.id} sections={sectionsList} client:load />
+          ) : scriptsWithSteps.length > 0 ? (
+            <TestScriptExecution sessionId={session.id} scripts={scriptsWithSteps} client:load />
+          ) : (
+            <p class="text-text-muted text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>
+          )}
+        </Card>
+
+        {hasNewTestingJourney && (
+          <Card class="mt-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-lg font-semibold text-text-primary">Matriz de Cobertura</h2>
+            </div>
+            <CoverageMatrix sessionId={session.id} autoRefresh={true} client:load />
+          </Card>
+        )}
+      </div>
+
+      <Card>
+        <LiveBugFeed sessionId={session.id} initialBugs={bugsList} client:load />
+      </Card>
+    </div>
+  ) : isWrapupPhase ? (
+    <Card class="mb-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Triagem de Bugs</h2>
+        <span class="text-xs text-text-muted">{bugsList.length} bug(s)</span>
+      </div>
+      {bugsList.length === 0 ? (
+        <p class="text-text-muted text-sm py-4 text-center">Nenhum bug para triagem.</p>
+      ) : (
+        <TriageTable sessionId={session.id} bugs={bugsList} client:load />
+      )}
+    </Card>
+  ) : null}
+
+  <div class="space-y-8">
+    <!-- Participants Section -->
+    <Card>
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-text-primary">Participantes</h2>
+      </div>
+      {participantsList.length === 0 ? (
+        <p class="text-text-muted text-sm py-4 text-center">Nenhum participante adicionado.</p>
+      ) : (
+        <div class="space-y-2">
+          {participantsList.map(p => (
+            <div class="flex items-center justify-between p-3 rounded-lg bg-surface-2">
+              <div>
+                <p class="text-sm font-medium text-text-primary">{p.name}</p>
+                <p class="text-xs text-text-muted">{p.email}</p>
+              </div>
+              <form method="POST" action={`/api/sessions/${session.id}/participants`}>
+                <input type="hidden" name="_method" value="DELETE" />
+                <input type="hidden" name="userId" value={p.userId} />
+                <button type="submit" class="text-xs text-text-muted hover:text-severity-blocker transition-colors">Remover</button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+
+    <!-- Test Scripts (non-execution phases) -->
+    {!isExecutionPhase && (
+      <Card>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text-primary">Scripts de Teste</h2>
+          <div class="flex items-center gap-3">
+            {hasNewTestingJourney && (
+              <a href={`/sessions/${session.id}/script-builder`} class="text-sm text-primary-400 hover:text-primary-300">Gerenciar Roteiro</a>
+            )}
+            <a href={`/sessions/${session.id}/scripts/new`} class="text-sm text-primary-400 hover:text-primary-300">Novo Script</a>
+          </div>
+        </div>
+        {isActiveSession && !isExecutionPhase && scriptsWithSteps.length > 0 ? (
+          <TestScriptExecution sessionId={session.id} scripts={scriptsWithSteps} client:load />
+        ) : scriptsWithSteps.length === 0 ? (
+          <p class="text-text-muted text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>
+        ) : (
+          <div class="space-y-3">
+            {scriptsWithSteps.map(s => (
+              <div class="p-4 rounded-lg bg-surface-2">
+                <div class="flex items-center justify-between">
+                  <p class="text-sm font-medium text-text-primary">{s.title}</p>
+                  {s.steps.length > 0 && <span class="text-xs text-text-muted">{s.steps.length} passo(s)</span>}
+                </div>
+                {s.description && <p class="text-xs text-text-secondary mt-1 whitespace-pre-line">{s.description}</p>}
+                {s.steps.length > 0 && (
+                  <div class="mt-3 space-y-1">
+                    {s.steps.map((step: any, idx: number) => (
+                      <div class="flex items-start gap-2 text-xs text-text-secondary">
+                        <span class="text-text-muted w-4 text-right flex-shrink-0">{idx + 1}.</span>
+                        <span class="whitespace-pre-line">{step.instruction}</span>
+                        {step.expectedResult && <span class="text-text-muted ml-1 whitespace-pre-line">— {step.expectedResult}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+    )}
+
+    <!-- Credentials Section -->
+    <CredentialsCard sessionId={session.id} credentials={credentialsList} isFacilitator={true} />
+
+    <!-- Test Resources Section -->
+    <TestResourcesCard sessionId={session.id} resources={resourcesList} isFacilitator={true} />
+
+    <!-- Bugs Section (non-execution, non-wrapup phases) -->
+    {!isExecutionPhase && !isWrapupPhase && (
+      <Card>
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-text-primary">Bugs</h2>
+          <a href={`/sessions/${session.id}/bugs/new`} class="text-sm text-primary-400 hover:text-primary-300">Reportar Bug</a>
+        </div>
+        {bugsList.length === 0 ? (
+          <p class="text-text-muted text-sm py-4 text-center">Nenhum bug reportado nesta sessão.</p>
+        ) : (
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-surface-3">
+                  <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Título</th>
+                  <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Severidade</th>
+                  <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Status</th>
+                  <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Reportado por</th>
+                  <th class="text-left px-3 py-2 text-text-muted font-medium text-xs">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bugsList.map(b => (
+                  <tr class="border-b border-surface-3 last:border-0 hover:bg-surface-2 transition-colors">
+                    <td class="px-3 py-2">
+                      <a href={`/sessions/${session.id}/bugs/${b.id}`} class="text-text-primary hover:text-primary-400 font-medium">{b.title}</a>
+                    </td>
+                    <td class="px-3 py-2"><Badge variant="bug-severity" value={b.severity}>{bugSeverityLabel(b.severity)}</Badge></td>
+                    <td class="px-3 py-2"><Badge variant="bug-status" value={b.status}>{bugStatusLabel(b.status)}</Badge></td>
+                    <td class="px-3 py-2 text-text-secondary">{b.reporterName}</td>
+                    <td class="px-3 py-2 text-text-secondary">{formatDate(b.createdAt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    )}
+  </div>
+</div>

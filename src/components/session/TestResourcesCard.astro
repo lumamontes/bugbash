@@ -1,0 +1,71 @@
+---
+import Card from '@components/ui/Card.astro';
+
+interface TestResource {
+  id: string;
+  label: string;
+  value: string;
+  group: string | null;
+}
+
+interface Props {
+  sessionId: string;
+  resources: TestResource[];
+  isFacilitator: boolean;
+}
+
+const { sessionId, resources, isFacilitator } = Astro.props;
+
+// Group resources by their group field
+const grouped = resources.reduce<Record<string, TestResource[]>>((acc, r) => {
+  const key = r.group || 'Geral';
+  if (!acc[key]) acc[key] = [];
+  acc[key].push(r);
+  return acc;
+}, {});
+const groupNames = Object.keys(grouped);
+---
+
+<Card>
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-text-primary">Dados de Teste</h2>
+  </div>
+  {isFacilitator && (
+    <form method="POST" action={`/api/sessions/${sessionId}/resources`} class="flex items-end gap-3 mb-4">
+      <div class="flex-1">
+        <label class="block text-xs text-text-muted mb-1">Label</label>
+        <input type="text" name="label" required placeholder="Ex: Escola Parametrizador" class="w-full px-2 py-1.5 bg-surface-2 border border-surface-3 rounded text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500" />
+      </div>
+      <div class="flex-1">
+        <label class="block text-xs text-text-muted mb-1">Valor</label>
+        <input type="text" name="value" required placeholder="Ex: ID 111960" class="w-full px-2 py-1.5 bg-surface-2 border border-surface-3 rounded text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500" />
+      </div>
+      <div class="flex-1">
+        <label class="block text-xs text-text-muted mb-1">Grupo</label>
+        <input type="text" name="group" placeholder="Ex: Sala Parametrização" class="w-full px-2 py-1.5 bg-surface-2 border border-surface-3 rounded text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500" />
+      </div>
+      <button type="submit" class="px-3 py-1.5 bg-primary-600 hover:bg-primary-700 text-white text-sm rounded transition-colors">Adicionar</button>
+    </form>
+  )}
+  {resources.length === 0 ? (
+    <p class="text-text-muted text-sm py-4 text-center">Nenhum dado de teste cadastrado.</p>
+  ) : (
+    <div class="space-y-4">
+      {groupNames.map(groupName => (
+        <div>
+          {groupNames.length > 1 && (
+            <h3 class="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">{groupName}</h3>
+          )}
+          <div class="space-y-1.5">
+            {grouped[groupName].map(r => (
+              <div class="flex items-center gap-3 px-3 py-2 rounded-lg bg-surface-2">
+                <span class="text-sm font-medium text-text-primary">{r.label}</span>
+                <span class="text-sm text-text-secondary font-mono">{r.value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</Card>

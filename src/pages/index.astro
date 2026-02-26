@@ -17,33 +17,30 @@ const orgId = user.orgId;
 const firstName = user.name.split(' ')[0];
 
 // Active sessions (not draft/closed)
-const activeSessionsCount = db
+const activeSessionsCount = (await db
   .select({ count: count() })
   .from(sessions)
   .where(and(
     eq(sessions.orgId, orgId),
     notInArray(sessions.status, ['draft', 'closed']),
-  ))
-  .get()!.count;
+  )))[0]!.count;
 
 // Total bugs
-const totalBugsCount = db
+const totalBugsCount = (await db
   .select({ count: count() })
   .from(bugs)
   .innerJoin(sessions, eq(bugs.sessionId, sessions.id))
-  .where(eq(sessions.orgId, orgId))
-  .get()!.count;
+  .where(eq(sessions.orgId, orgId)))[0]!.count;
 
 // Total participants (distinct users in session_participants for org sessions)
-const totalParticipantsCount = db
+const totalParticipantsCount = (await db
   .select({ count: count() })
   .from(sessionParticipants)
   .innerJoin(sessions, eq(sessionParticipants.sessionId, sessions.id))
-  .where(eq(sessions.orgId, orgId))
-  .get()!.count;
+  .where(eq(sessions.orgId, orgId)))[0]!.count;
 
 // Recent 5 sessions
-const recentSessions = db
+const recentSessions = await db
   .select({
     id: sessions.id,
     title: sessions.title,
@@ -53,11 +50,10 @@ const recentSessions = db
   .from(sessions)
   .where(eq(sessions.orgId, orgId))
   .orderBy(desc(sessions.createdAt))
-  .limit(5)
-  .all();
+  .limit(5);
 
 // Recent 5 bugs
-const recentBugs = db
+const recentBugs = await db
   .select({
     id: bugs.id,
     sessionId: bugs.sessionId,
@@ -71,8 +67,7 @@ const recentBugs = db
   .innerJoin(users, eq(bugs.reportedBy, users.id))
   .where(eq(sessions.orgId, orgId))
   .orderBy(desc(bugs.createdAt))
-  .limit(5)
-  .all();
+  .limit(5);
 ---
 
 <AppLayout title="Painel — Bug Bash">

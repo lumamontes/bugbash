@@ -13,7 +13,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return new Response(JSON.stringify({ error: 'bugId required' }), { status: 400 });
   }
 
-  const bug = db
+  const bug = (await db
     .select({
       title: bugs.title,
       description: bugs.description,
@@ -26,13 +26,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
     .from(bugs)
     .innerJoin(users, eq(bugs.reportedBy, users.id))
     .where(eq(bugs.id, bugId))
-    .get();
+    )[0];
 
   if (!bug) {
     return new Response(JSON.stringify({ error: 'Bug not found' }), { status: 404 });
   }
 
-  const session = db.select({ title: sessions.title }).from(sessions).where(eq(sessions.id, bug.sessionId)).get();
+  const session = (await db.select({ title: sessions.title }).from(sessions).where(eq(sessions.id, bug.sessionId)))[0];
 
   const original = {
     title: bug.title,

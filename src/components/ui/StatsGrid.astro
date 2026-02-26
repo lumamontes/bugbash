@@ -1,0 +1,25 @@
+---
+import Card from './Card.astro';
+
+interface StatItem {
+  label: string;
+  value: string | number;
+}
+
+interface Props {
+  stats: StatItem[];
+  class?: string;
+}
+
+const { stats, class: className = '' } = Astro.props;
+const cols = stats.length <= 4 ? `md:grid-cols-${stats.length}` : `md:grid-cols-5`;
+---
+
+<div class={`grid grid-cols-2 ${cols} gap-4 ${className}`}>
+  {stats.map(stat => (
+    <Card class="!p-4">
+      <p class="text-text-muted text-xs font-medium">{stat.label}</p>
+      <p class="text-2xl font-bold text-text-primary mt-1">{stat.value}</p>
+    </Card>
+  ))}
+</div>

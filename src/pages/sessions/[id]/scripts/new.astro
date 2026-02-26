@@ -9,7 +9,7 @@ import { eq } from 'drizzle-orm';
 const user = Astro.locals.user!;
 const { id } = Astro.params;
 
-const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
+const session = (await db.select().from(sessions).where(eq(sessions.id, id!)))[0];
 if (!session || session.orgId !== user.orgId) {
   return Astro.redirect('/sessions');
 }

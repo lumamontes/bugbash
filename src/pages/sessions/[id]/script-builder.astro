@@ -9,29 +9,29 @@ const user = Astro.locals.user;
 if (!user) return Astro.redirect('/login');
 
 const { id } = Astro.params;
-const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
+const session = (await db.select().from(sessions).where(eq(sessions.id, id!)))[0];
 if (!session || session.orgId !== user.orgId) return Astro.redirect('/');
 
 // Get or create the script for this session
-let script = db.select().from(testScripts).where(eq(testScripts.sessionId, id!)).get();
+let script = (await db.select().from(testScripts).where(eq(testScripts.sessionId, id!)))[0];
 if (!script) {
   const scriptId = crypto.randomUUID();
-  db.insert(testScripts).values({
+  await db.insert(testScripts).values({
     id: scriptId,
     sessionId: id!,
     title: session.title + ' - Roteiro',
     orderIndex: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
-  }).run();
-  script = db.select().from(testScripts).where(eq(testScripts.id, scriptId)).get()!;
+  });
+  script = (await db.select().from(testScripts).where(eq(testScripts.id, scriptId)))[0]!;
 }
 
 // Load sections with scenarios
 const sectionsList: any[] = [];
-const dbSections = db.select().from(testSections).where(eq(testSections.scriptId, script.id)).orderBy(testSections.sortOrder).all();
+const dbSections = await db.select().from(testSections).where(eq(testSections.scriptId, script.id)).orderBy(testSections.sortOrder);
 for (const section of dbSections) {
-  const scenarios = db.select().from(testScenarios).where(eq(testScenarios.sectionId, section.id)).orderBy(testScenarios.sortOrder).all();
+  const scenarios = await db.select().from(testScenarios).where(eq(testScenarios.sectionId, section.id)).orderBy(testScenarios.sortOrder);
   sectionsList.push({ ...section, scenarios });
 }
 ---

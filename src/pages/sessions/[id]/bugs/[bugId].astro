@@ -5,95 +5,31 @@ import Card from '@components/ui/Card.astro';
 import BugStatusSelect from '@components/BugStatusSelect';
 import EvidenceGallery from '@components/EvidenceGallery';
 import LinearExportModal from '@components/LinearExportModal';
-import { db } from '@db/index';
-import { sessions, bugs, bugComments, bugTags, bugEvidence, tags, users, testSteps, testScripts } from '@db/schema';
-import { eq } from 'drizzle-orm';
 import { bugSeverityLabel, bugStatusLabel, bugTypeLabel, formatDateTime } from '@lib/format';
+import { getSessionOrNull } from '@lib/services/helpers';
+import { getBugWithDetails, getBugTags, getBugEvidence, getLinkedStep, getBugComments } from '@lib/services/bugs';
 
 const user = Astro.locals.user!;
 const { id, bugId } = Astro.params;
 
-const session = db.select().from(sessions).where(eq(sessions.id, id!)).get();
-if (!session || session.orgId !== user.orgId) {
-  return Astro.redirect('/sessions');
-}
+const session = await getSessionOrNull(id!, user.orgId);
+if (!session) return Astro.redirect('/sessions');
 
-const bug = db
-  .select({
-    id: bugs.id,
-    title: bugs.title,
-    description: bugs.description,
-    stepsToReproduce: bugs.stepsToReproduce,
-    severity: bugs.severity,
-    type: bugs.type,
-    status: bugs.status,
-    qualityScore: bugs.qualityScore,
-    reportedVia: bugs.reportedVia,
-    testStepId: bugs.testStepId,
-    linearIssueId: bugs.linearIssueId,
-    linearIssueUrl: bugs.linearIssueUrl,
-    createdAt: bugs.createdAt,
-    updatedAt: bugs.updatedAt,
-    reporterName: users.name,
-  })
-  .from(bugs)
-  .innerJoin(users, eq(bugs.reportedBy, users.id))
-  .where(eq(bugs.id, bugId!))
-  .get();
+const bug = await getBugWithDetails(bugId!);
+if (!bug) return Astro.redirect(`/sessions/${id}`);
 
-if (!bug) {
-  return Astro.redirect(`/sessions/${id}`);
-}
+const [bugTagsList, evidenceList, comments] = await Promise.all([
+  getBugTags(bugId!),
+  getBugEvidence(bugId!),
+  getBugComments(bugId!),
+]);
 
-// Tags for this bug
-const bugTagsList = db
-  .select({ id: tags.id, name: tags.name, color: tags.color })
-  .from(bugTags)
-  .innerJoin(tags, eq(bugTags.tagId, tags.id))
-  .where(eq(bugTags.bugId, bugId!))
-  .all();
-
-// Evidence for this bug
-const evidenceList = db
-  .select({
-    id: bugEvidence.id,
-    type: bugEvidence.type,
-    url: bugEvidence.url,
-    filename: bugEvidence.filename,
-  })
-  .from(bugEvidence)
-  .where(eq(bugEvidence.bugId, bugId!))
-  .all();
-
-// Linked test step
 let linkedStep: { instruction: string; scriptTitle: string } | null = null;
 if (bug.testStepId) {
-  const step = db
-    .select({ instruction: testSteps.instruction, scriptId: testSteps.scriptId })
-    .from(testSteps)
-    .where(eq(testSteps.id, bug.testStepId))
-    .get();
-  if (step) {
-    const script = db.select({ title: testScripts.title }).from(testScripts).where(eq(testScripts.id, step.scriptId)).get();
-    linkedStep = { instruction: step.instruction, scriptTitle: script?.title || '' };
-  }
+  linkedStep = await getLinkedStep(bug.testStepId);
 }
 
 const isFacilitator = user.role === 'admin' || user.role === 'facilitator';
-
-// Comments
-const comments = db
-  .select({
-    id: bugComments.id,
-    content: bugComments.content,
-    createdAt: bugComments.createdAt,
-    userName: users.name,
-  })
-  .from(bugComments)
-  .innerJoin(users, eq(bugComments.userId, users.id))
-  .where(eq(bugComments.bugId, bugId!))
-  .orderBy(bugComments.createdAt)
-  .all();
 ---
 
 <AppLayout title={`${bug.title} — Bug Bash`}>

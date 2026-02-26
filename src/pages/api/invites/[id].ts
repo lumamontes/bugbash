@@ -12,7 +12,7 @@ export const DELETE: APIRoute = async ({ params, locals }) => {
     return new Response('Missing id', { status: 400 });
   }
 
-  deactivateInvite(id);
+  await deactivateInvite(id);
 
   return new Response(JSON.stringify({ ok: true }), {
     headers: { 'Content-Type': 'application/json' },
