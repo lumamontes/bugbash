@@ -35,6 +35,7 @@ COPY --from=base /app/drizzle.config.ts ./drizzle.config.ts
 RUN mkdir -p /app/uploads
 
 ENV HOST=0.0.0.0
+ENV PORT=8080
 ENV NODE_ENV=production
 
 EXPOSE 8080

@@ -132,7 +132,7 @@ IMPORTANTE:
 • Banner laranja NÃO é bug — eventos legados sem autor são esperados.
 • Mudar permissões de série/perfil de um Produto dentro de um Pacote NÃO deve gerar evento no histórico da escola.
 • Filtros combinados devem funcionar rapidamente (stress test).
-• "Frontend burro" — textos devem estar humanizados, sem JSON ou dados técnicos crus.`,
+• Textos devem estar humanizados, sem JSON ou dados técnicos crus.`,
   status: 'active',
   sortOrder: 0,
   createdAt: ts(1),
