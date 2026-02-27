@@ -10,9 +10,9 @@ const { variant = 'default', value = '', class: className = '' } = Astro.props;
 const sessionStatusColors: Record<string, string> = {
   draft: 'bg-text-muted/20 text-text-muted',
   scheduled: 'bg-primary-500/20 text-primary-400',
-  kickoff: 'bg-amber-500/20 text-amber-400',
-  execution: 'bg-emerald-500/20 text-emerald-400',
-  wrapup: 'bg-orange-500/20 text-orange-400',
+  kickoff: 'bg-severity-minor/20 text-severity-minor',
+  execution: 'bg-severity-enhancement/20 text-severity-enhancement',
+  wrapup: 'bg-severity-major/20 text-severity-major',
   closed: 'bg-text-muted/20 text-text-secondary',
 };
 

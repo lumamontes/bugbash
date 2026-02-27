@@ -161,7 +161,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
             onClick={() => setActiveMode('guided')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeMode === 'guided'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
@@ -171,7 +171,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
             onClick={() => setActiveMode('free')}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeMode === 'free'
-                ? 'bg-indigo-600 text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
@@ -192,7 +192,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                     onClick={() => setActiveSectionId(section.id)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-surface-3 border border-indigo-500/50'
+                        ? 'bg-surface-3 border border-primary-500/50'
                         : 'bg-surface-2 hover:bg-surface-3 border border-transparent'
                     }`}
                   >
@@ -239,10 +239,10 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                       <div
                         key={scenario.id}
                         className={`rounded-lg border transition-colors ${
-                          exec?.status === 'pass' ? 'border-green-800/50 bg-green-950/20' :
-                          exec?.status === 'fail' ? 'border-red-800/50 bg-red-950/20' :
-                          exec?.status === 'partial' ? 'border-yellow-800/50 bg-yellow-950/20' :
-                          exec?.status === 'blocked' ? 'border-orange-800/50 bg-orange-950/20' :
+                          exec?.status === 'pass' ? 'border-severity-enhancement/50 bg-severity-enhancement/10' :
+                          exec?.status === 'fail' ? 'border-severity-blocker/50 bg-severity-blocker/10' :
+                          exec?.status === 'partial' ? 'border-severity-minor/50 bg-severity-minor/10' :
+                          exec?.status === 'blocked' ? 'border-severity-major/50 bg-severity-major/10' :
                           'border-surface-3 bg-surface-2'
                         }`}
                       >
@@ -255,7 +255,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-medium text-text-primary">{scenario.title}</span>
                               {scenario.persona && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-900/50 text-indigo-300">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-600/20 text-primary-400">
                                   {scenario.persona}
                                 </span>
                               )}
@@ -266,7 +266,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                               )}
                             </div>
                             {!depMet && scenario.dependsOn && (
-                              <p className="text-xs text-orange-400 mt-1">
+                              <p className="text-xs text-severity-major mt-1">
                                 Depende de: {getDependencyScenarioTitle(scenario.dependsOn)}
                               </p>
                             )}
@@ -321,10 +321,10 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                                 onChange={e => setComments(prev => ({ ...prev, [scenario.id]: e.target.value }))}
                                 placeholder="Observações, detalhes do teste..."
                                 rows={2}
-                                className="w-full px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                                className="w-full px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none"
                               />
                               {(exec?.status === 'partial' || exec?.status === 'blocked') && !comments[scenario.id]?.trim() && (
-                                <p className="text-xs text-orange-400 mt-1">Comentário obrigatório para status parcial/bloqueado</p>
+                                <p className="text-xs text-severity-major mt-1">Comentário obrigatório para status parcial/bloqueado</p>
                               )}
                             </div>
 
@@ -352,7 +352,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                               {exec?.status === 'fail' && (
                                 <a
                                   href={`/sessions/${sessionId}/bugs/new?scenarioId=${scenario.id}&sectionId=${activeSection.id}`}
-                                  className="ml-2 px-3 py-1.5 bg-red-500/10 text-red-400 rounded-lg text-xs font-medium hover:bg-red-500/20 transition-colors"
+                                  className="ml-2 px-3 py-1.5 bg-severity-blocker/10 text-severity-blocker rounded-lg text-xs font-medium hover:bg-severity-blocker/20 transition-colors"
                                 >
                                   Reportar Bug
                                 </a>
@@ -380,21 +380,21 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
               <div className="flex items-center justify-center gap-4">
                 <a
                   href={`/sessions/${sessionId}/bugs/new?mode=freeform&type=bug`}
-                  className="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-severity-blocker hover:bg-severity-blocker/80 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                 >
                   <span className="text-lg">🐛</span>
                   Bug
                 </a>
                 <a
                   href={`/sessions/${sessionId}/bugs/new?mode=freeform&type=improvement`}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                 >
                   <span className="text-lg">💡</span>
                   Melhoria
                 </a>
                 <a
                   href={`/sessions/${sessionId}/bugs/new?mode=freeform&type=ux_insight`}
-                  className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                  className="px-6 py-3 bg-accent-500 hover:bg-accent-400 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                 >
                   <span className="text-lg">🎨</span>
                   Insight UX

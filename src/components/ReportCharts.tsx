@@ -21,7 +21,7 @@ export default function ReportCharts({ severityData, reporterData, statusData }:
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       {/* Severity Pie */}
-      <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+      <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
         <h3 className="text-sm font-semibold text-text-primary mb-4">Severidade</h3>
         {severityData.length === 0 ? (
           <p className="text-text-muted text-sm text-center py-8">Sem dados</p>
@@ -63,7 +63,7 @@ export default function ReportCharts({ severityData, reporterData, statusData }:
       </div>
 
       {/* Status Pie */}
-      <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+      <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
         <h3 className="text-sm font-semibold text-text-primary mb-4">Status</h3>
         {statusData.length === 0 ? (
           <p className="text-text-muted text-sm text-center py-8">Sem dados</p>
@@ -105,7 +105,7 @@ export default function ReportCharts({ severityData, reporterData, statusData }:
       </div>
 
       {/* Reporter Bar Chart */}
-      <div className="bg-surface-1 border border-surface-3 rounded-xl p-6 md:col-span-2">
+      <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6 md:col-span-2">
         <h3 className="text-sm font-semibold text-text-primary mb-4">Bugs por Participante</h3>
         {reporterData.length === 0 ? (
           <p className="text-text-muted text-sm text-center py-8">Sem dados</p>

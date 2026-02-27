@@ -49,7 +49,7 @@ export default function AnalyticsCharts({
     <div className="space-y-6">
       {/* Row 1: Bugs per session + Severity stacked bar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+        <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-text-primary mb-4">Bugs por Sessão</h3>
           {sessionTrend.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
@@ -66,7 +66,7 @@ export default function AnalyticsCharts({
           )}
         </div>
 
-        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+        <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-text-primary mb-4">Severidade por Sessão</h3>
           {severityTrend.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
@@ -89,7 +89,7 @@ export default function AnalyticsCharts({
 
       {/* Row 2: Source breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+        <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-text-primary mb-4">Widget vs Plataforma</h3>
           {sourceData.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
@@ -118,7 +118,7 @@ export default function AnalyticsCharts({
 
       {/* Row 3: Top reporters + Resolution funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+        <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-text-primary mb-4">Top Participantes</h3>
           {topReporters.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-8">Sem dados</p>
@@ -148,7 +148,7 @@ export default function AnalyticsCharts({
           )}
         </div>
 
-        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+        <div className="bg-surface-1 border border-surface-3 rounded-2xl p-6">
           <h3 className="text-sm font-semibold text-text-primary mb-4">Funil de Resolução</h3>
           {resolutionData.length === 0 ? (
             <p className="text-text-muted text-sm text-center py-8">Sem dados</p>

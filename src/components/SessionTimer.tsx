@@ -70,7 +70,7 @@ export default function SessionTimer({ status, startedAt, kickoffDuration, execu
   const barColor = isOvertime ? 'var(--color-severity-blocker)' : isWarning ? 'var(--color-severity-minor)' : 'var(--color-primary-500)';
 
   return (
-    <div className="bg-surface-1 border border-surface-3 rounded-xl p-4">
+    <div className="bg-surface-1 border border-surface-3 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${isWarning || isOvertime ? 'animate-pulse' : ''}`} style={{ backgroundColor: barColor }} />

@@ -69,7 +69,7 @@ export default function BadgeToast({ sessionId, userId }: Props) {
       {toasts.map((badge) => (
         <div
           key={badge.id}
-          className="animate-slide-in bg-surface-1 border rounded-xl px-5 py-4 shadow-2xl max-w-sm flex items-center gap-4"
+          className="animate-slide-in bg-surface-1 border rounded-2xl px-5 py-4 shadow-2xl max-w-sm flex items-center gap-4"
           style={{ borderColor: tierColors[badge.tier] || 'var(--color-primary-500)' }}
         >
           <span className="text-3xl">{badge.icon}</span>

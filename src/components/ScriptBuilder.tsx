@@ -40,9 +40,9 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-900 text-green-300',
-  draft: 'bg-yellow-900 text-yellow-300',
-  not_ready: 'bg-red-900 text-red-300',
+  active: 'bg-severity-enhancement/20 text-severity-enhancement',
+  draft: 'bg-severity-minor/20 text-severity-minor',
+  not_ready: 'bg-severity-blocker/20 text-severity-blocker',
 };
 
 // ── Toast Component ──────────────────────────────────────────────────────────
@@ -106,30 +106,30 @@ function ImportModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/60">
-      <div className="bg-zinc-800 border border-zinc-700 rounded-lg w-full max-w-2xl mx-4 shadow-xl">
-        <div className="flex items-center justify-between p-4 border-b border-zinc-700">
-          <h3 className="text-lg font-semibold text-zinc-100">Importar Roteiro</h3>
-          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-200 text-xl leading-none">&times;</button>
+      <div className="bg-surface-1 border border-surface-3 rounded-lg w-full max-w-2xl mx-4 shadow-xl">
+        <div className="flex items-center justify-between p-4 border-b border-surface-3">
+          <h3 className="text-lg font-semibold text-text-primary">Importar Roteiro</h3>
+          <button onClick={onClose} className="text-text-muted hover:text-text-primary text-xl leading-none">&times;</button>
         </div>
         <div className="p-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Formato</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">Formato</label>
             <select
               value={format}
               onChange={(e) => setFormat(e.target.value as 'markdown' | 'csv')}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-zinc-100 rounded-lg focus:border-indigo-500 focus:outline-none"
+              className="w-full px-3 py-2 bg-surface-1 border border-surface-3 text-text-primary rounded-lg focus:border-primary-500 focus:outline-none"
             >
               <option value="markdown">Markdown</option>
               <option value="csv">CSV</option>
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1.5">Conteudo</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">Conteudo</label>
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={12}
-              className="w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-zinc-100 rounded-lg focus:border-indigo-500 focus:outline-none resize-none font-mono text-sm"
+              className="w-full px-3 py-2 bg-surface-1 border border-surface-3 text-text-primary rounded-lg focus:border-primary-500 focus:outline-none resize-none font-mono text-sm"
               placeholder={
                 format === 'markdown'
                   ? '## Nome da Seção\n- Cenário 1\n- Cenário 2\n\n## Outra Seção\n- Cenário 3'
@@ -137,23 +137,23 @@ function ImportModal({
               }
             />
           </div>
-          <div className="text-xs text-zinc-500">
+          <div className="text-xs text-text-muted">
             {format === 'markdown'
               ? 'Use ## para seções e - para cenários dentro de cada seção.'
               : 'Colunas obrigatórias: section, title. Opcionais: precondition, steps, expected_result, persona.'}
           </div>
         </div>
-        <div className="flex items-center justify-end gap-3 p-4 border-t border-zinc-700">
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-surface-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded-lg transition-colors"
           >
             Cancelar
           </button>
           <button
             onClick={handleImport}
             disabled={importing || !content.trim()}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg transition-colors"
           >
             {importing ? 'Importando...' : 'Importar'}
           </button>
@@ -187,12 +187,12 @@ function SectionForm({
     onSubmit({ title, description, status, notReadyReason });
   }
 
-  const inputClass = 'w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-zinc-100 rounded-lg focus:border-indigo-500 focus:outline-none text-sm';
+  const inputClass = 'w-full px-3 py-2 bg-surface-1 border border-surface-3 text-text-primary rounded-lg focus:border-primary-500 focus:outline-none text-sm';
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-800 border border-zinc-700 rounded-lg p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-surface-1 border border-surface-3 rounded-lg p-4 space-y-3">
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-1">Titulo *</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Titulo *</label>
         <input
           type="text"
           value={title}
@@ -204,7 +204,7 @@ function SectionForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-1">Descrição</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Descrição</label>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
@@ -216,7 +216,7 @@ function SectionForm({
       {initial && (
         <>
           <div>
-            <label className="block text-sm font-medium text-zinc-300 mb-1">Status</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Status</label>
             <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputClass}>
               <option value="active">Ativa</option>
               <option value="draft">Rascunho</option>
@@ -225,7 +225,7 @@ function SectionForm({
           </div>
           {status === 'not_ready' && (
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-1">Motivo</label>
+              <label className="block text-sm font-medium text-text-secondary mb-1">Motivo</label>
               <input
                 type="text"
                 value={notReadyReason}
@@ -241,14 +241,14 @@ function SectionForm({
         <button
           type="submit"
           disabled={loading || !title.trim()}
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg transition-colors"
         >
           {loading ? 'Salvando...' : initial ? 'Salvar' : 'Adicionar Seção'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded-lg transition-colors"
         >
           Cancelar
         </button>
@@ -294,12 +294,12 @@ function ScenarioForm({
     });
   }
 
-  const inputClass = 'w-full px-3 py-2 bg-zinc-800 border border-zinc-600 text-zinc-100 rounded-lg focus:border-indigo-500 focus:outline-none text-sm';
+  const inputClass = 'w-full px-3 py-2 bg-surface-1 border border-surface-3 text-text-primary rounded-lg focus:border-primary-500 focus:outline-none text-sm';
 
   return (
-    <form onSubmit={handleSubmit} className="bg-zinc-900 border border-zinc-700 rounded-lg p-4 space-y-3">
+    <form onSubmit={handleSubmit} className="bg-surface-0 border border-surface-3 rounded-lg p-4 space-y-3">
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-1">Titulo *</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Titulo *</label>
         <input
           type="text"
           value={title}
@@ -312,7 +312,7 @@ function ScenarioForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Pré-condição</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Pré-condição</label>
           <input
             type="text"
             value={precondition ?? ''}
@@ -322,7 +322,7 @@ function ScenarioForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Persona</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Persona</label>
           <input
             type="text"
             value={persona ?? ''}
@@ -333,7 +333,7 @@ function ScenarioForm({
         </div>
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-1">Passos para Executar</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Passos para Executar</label>
         <textarea
           value={stepsToExecute ?? ''}
           onChange={(e) => setStepsToExecute(e.target.value)}
@@ -343,7 +343,7 @@ function ScenarioForm({
         />
       </div>
       <div>
-        <label className="block text-sm font-medium text-zinc-300 mb-1">Resultado Esperado</label>
+        <label className="block text-sm font-medium text-text-secondary mb-1">Resultado Esperado</label>
         <textarea
           value={expectedResult ?? ''}
           onChange={(e) => setExpectedResult(e.target.value)}
@@ -354,7 +354,7 @@ function ScenarioForm({
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Regras Chave</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Regras Chave</label>
           <input
             type="text"
             value={keyRules ?? ''}
@@ -364,7 +364,7 @@ function ScenarioForm({
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-zinc-300 mb-1">Depende de</label>
+          <label className="block text-sm font-medium text-text-secondary mb-1">Depende de</label>
           <select
             value={dependsOn ?? ''}
             onChange={(e) => setDependsOn(e.target.value)}
@@ -385,14 +385,14 @@ function ScenarioForm({
         <button
           type="submit"
           disabled={loading || !title.trim()}
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 disabled:opacity-50 rounded-lg transition-colors"
         >
           {loading ? 'Salvando...' : initial ? 'Salvar' : 'Adicionar Cenário'}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+          className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded-lg transition-colors"
         >
           Cancelar
         </button>
@@ -477,14 +477,14 @@ function ScenarioCard({
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-700 rounded-lg">
+    <div className="bg-surface-0 border border-surface-3 rounded-lg">
       <div
-        className="flex items-center justify-between p-3 cursor-pointer hover:bg-zinc-800/50 transition-colors rounded-lg"
+        className="flex items-center justify-between p-3 cursor-pointer hover:bg-surface-1/50 transition-colors rounded-lg"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-3 min-w-0">
           <svg
-            className={`w-4 h-4 text-zinc-500 flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
+            className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform ${expanded ? 'rotate-90' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -492,9 +492,9 @@ function ScenarioCard({
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <span className="text-sm font-medium text-zinc-100 truncate">{scenario.title}</span>
+          <span className="text-sm font-medium text-text-primary truncate">{scenario.title}</span>
           {scenario.persona && (
-            <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-indigo-900 text-indigo-300">
+            <span className="flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-primary-600/20 text-primary-400">
               {scenario.persona}
             </span>
           )}
@@ -502,7 +502,7 @@ function ScenarioCard({
         <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
           <button
             onClick={() => setEditing(true)}
-            className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
             title="Editar"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -520,7 +520,7 @@ function ScenarioCard({
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-2 py-1 text-xs font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded transition-colors"
+                className="px-2 py-1 text-xs font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded transition-colors"
               >
                 Não
               </button>
@@ -528,7 +528,7 @@ function ScenarioCard({
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+              className="p-1.5 text-text-muted hover:text-red-400 transition-colors"
               title="Excluir"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -539,35 +539,35 @@ function ScenarioCard({
         </div>
       </div>
       {expanded && (
-        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-zinc-700/50">
+        <div className="px-4 pb-4 pt-1 space-y-2 border-t border-surface-3/50">
           {scenario.precondition && (
             <div>
-              <span className="text-xs font-medium text-zinc-500">Pré-condição:</span>
-              <p className="text-sm text-zinc-300 mt-0.5">{scenario.precondition}</p>
+              <span className="text-xs font-medium text-text-muted">Pré-condição:</span>
+              <p className="text-sm text-text-secondary mt-0.5">{scenario.precondition}</p>
             </div>
           )}
           {scenario.stepsToExecute && (
             <div>
-              <span className="text-xs font-medium text-zinc-500">Passos:</span>
-              <p className="text-sm text-zinc-300 mt-0.5 whitespace-pre-line">{scenario.stepsToExecute}</p>
+              <span className="text-xs font-medium text-text-muted">Passos:</span>
+              <p className="text-sm text-text-secondary mt-0.5 whitespace-pre-line">{scenario.stepsToExecute}</p>
             </div>
           )}
           {scenario.expectedResult && (
             <div>
-              <span className="text-xs font-medium text-zinc-500">Resultado Esperado:</span>
-              <p className="text-sm text-zinc-300 mt-0.5 whitespace-pre-line">{scenario.expectedResult}</p>
+              <span className="text-xs font-medium text-text-muted">Resultado Esperado:</span>
+              <p className="text-sm text-text-secondary mt-0.5 whitespace-pre-line">{scenario.expectedResult}</p>
             </div>
           )}
           {scenario.keyRules && (
             <div>
-              <span className="text-xs font-medium text-zinc-500">Regras Chave:</span>
-              <p className="text-sm text-zinc-300 mt-0.5">{scenario.keyRules}</p>
+              <span className="text-xs font-medium text-text-muted">Regras Chave:</span>
+              <p className="text-sm text-text-secondary mt-0.5">{scenario.keyRules}</p>
             </div>
           )}
           {scenario.dependsOn && (
             <div>
-              <span className="text-xs font-medium text-zinc-500">Depende de:</span>
-              <p className="text-sm text-zinc-300 mt-0.5">
+              <span className="text-xs font-medium text-text-muted">Depende de:</span>
+              <p className="text-sm text-text-secondary mt-0.5">
                 {allScenarios.find((s) => s.id === scenario.dependsOn)?.title ?? scenario.dependsOn}
               </p>
             </div>
@@ -697,7 +697,7 @@ function SectionAccordion({
   }
 
   return (
-    <div className="bg-zinc-800 border border-zinc-700 rounded-lg">
+    <div className="bg-surface-1 border border-surface-3 rounded-lg">
       {/* Section Header */}
       <div className="flex items-center justify-between p-4">
         <div
@@ -705,7 +705,7 @@ function SectionAccordion({
           onClick={() => setOpen(!open)}
         >
           <svg
-            className={`w-5 h-5 text-zinc-400 flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`}
+            className={`w-5 h-5 text-text-muted flex-shrink-0 transition-transform ${open ? 'rotate-90' : ''}`}
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -713,18 +713,18 @@ function SectionAccordion({
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
           </svg>
-          <h3 className="text-base font-semibold text-zinc-100 truncate">{section.title}</h3>
+          <h3 className="text-base font-semibold text-text-primary truncate">{section.title}</h3>
           <span className={`flex-shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${statusColors[section.status]}`}>
             {statusLabels[section.status]}
           </span>
-          <span className="text-xs text-zinc-500 flex-shrink-0">
+          <span className="text-xs text-text-muted flex-shrink-0">
             {section.scenarios.length} {section.scenarios.length === 1 ? 'cenário' : 'cenários'}
           </span>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setEditingSection(true)}
-            className="p-1.5 text-zinc-500 hover:text-zinc-200 transition-colors"
+            className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
             title="Editar seção"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -742,7 +742,7 @@ function SectionAccordion({
               </button>
               <button
                 onClick={() => setConfirmDelete(false)}
-                className="px-2 py-1 text-xs font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded transition-colors"
+                className="px-2 py-1 text-xs font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded transition-colors"
               >
                 Não
               </button>
@@ -750,7 +750,7 @@ function SectionAccordion({
           ) : (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="p-1.5 text-zinc-500 hover:text-red-400 transition-colors"
+              className="p-1.5 text-text-muted hover:text-red-400 transition-colors"
               title="Excluir seção"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -764,7 +764,7 @@ function SectionAccordion({
       {/* Section description */}
       {open && section.description && (
         <div className="px-4 pb-2">
-          <p className="text-sm text-zinc-400">{section.description}</p>
+          <p className="text-sm text-text-muted">{section.description}</p>
         </div>
       )}
 
@@ -779,7 +779,7 @@ function SectionAccordion({
       {open && (
         <div className="px-4 pb-4 space-y-2">
           {section.scenarios.length === 0 && !addingScenario && (
-            <p className="text-sm text-zinc-500 py-2">Nenhum cenário nesta seção.</p>
+            <p className="text-sm text-text-muted py-2">Nenhum cenário nesta seção.</p>
           )}
           {section.scenarios.map((scenario) => (
             <ScenarioCard
@@ -803,7 +803,7 @@ function SectionAccordion({
           ) : (
             <button
               onClick={() => setAddingScenario(true)}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-700/50 rounded-lg transition-colors w-full"
+              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-muted hover:text-text-primary hover:bg-surface-3/50 rounded-lg transition-colors w-full"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -944,27 +944,27 @@ export default function ScriptBuilder({
   return (
     <div className="space-y-4">
       {/* Summary bar */}
-      <div className="flex items-center justify-between bg-zinc-800 border border-zinc-700 rounded-lg p-4">
+      <div className="flex items-center justify-between bg-surface-1 border border-surface-3 rounded-lg p-4">
         <div className="flex items-center gap-6">
           <div>
-            <span className="text-2xl font-bold text-zinc-100">{sections.length}</span>
-            <span className="text-sm text-zinc-400 ml-1.5">{sections.length === 1 ? 'seção' : 'seções'}</span>
+            <span className="text-2xl font-bold text-text-primary">{sections.length}</span>
+            <span className="text-sm text-text-muted ml-1.5">{sections.length === 1 ? 'seção' : 'seções'}</span>
           </div>
           <div>
-            <span className="text-2xl font-bold text-zinc-100">{totalScenarios}</span>
-            <span className="text-sm text-zinc-400 ml-1.5">{totalScenarios === 1 ? 'cenário' : 'cenários'}</span>
+            <span className="text-2xl font-bold text-text-primary">{totalScenarios}</span>
+            <span className="text-sm text-text-muted ml-1.5">{totalScenarios === 1 ? 'cenário' : 'cenários'}</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowImport(true)}
-            className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded-lg transition-colors"
           >
             Importar
           </button>
           <button
             onClick={() => setAddingSection(true)}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors"
           >
             + Nova Seção
           </button>
@@ -1001,34 +1001,26 @@ export default function ScriptBuilder({
 
       {/* Empty state */}
       {sections.length === 0 && !addingSection && (
-        <div className="text-center py-12 bg-zinc-800 border border-zinc-700 rounded-lg">
-          <svg
-            className="w-12 h-12 text-zinc-600 mx-auto mb-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"
-            />
-          </svg>
-          <h3 className="text-lg font-medium text-zinc-300 mb-2">Nenhuma seção criada</h3>
-          <p className="text-sm text-zinc-500 mb-4">
+        <div className="text-center py-12 bg-surface-1 border border-surface-3 rounded-lg">
+          <img
+            src="https://cdn.arcotech.io/iris-ds/illustrations/arcotech/empty-state/empty-state-generico.svg"
+            alt=""
+            className="w-40 h-auto mx-auto mb-4"
+          />
+          <h3 className="text-lg font-medium text-text-secondary mb-2">Nenhuma seção criada</h3>
+          <p className="text-sm text-text-muted mb-4">
             Comece adicionando seções e cenários ao roteiro de teste, ou importe de um arquivo.
           </p>
           <div className="flex items-center justify-center gap-3">
             <button
               onClick={() => setShowImport(true)}
-              className="px-4 py-2 text-sm font-medium text-zinc-300 bg-zinc-700 hover:bg-zinc-600 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-text-secondary bg-surface-3 hover:bg-surface-2 rounded-lg transition-colors"
             >
               Importar
             </button>
             <button
               onClick={() => setAddingSection(true)}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors"
             >
               + Nova Seção
             </button>

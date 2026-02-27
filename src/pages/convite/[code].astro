@@ -39,6 +39,7 @@ const roleLabel: Record<string, string> = {
   <div class="min-h-screen flex items-center justify-center px-4">
     <div class="w-full max-w-sm">
       <div class="text-center mb-8">
+        <img src="https://cdn.arcotech.io/iris-ds/brand/arcotech/icon.svg" alt="Arcotech" width="40" height="40" class="mx-auto mb-3" />
         <h1 class="text-2xl font-bold text-text-primary">Bug Bash</h1>
         <p class="text-sm text-text-secondary mt-2">
           Você foi convidado para {org?.name ?? 'a organização'}
@@ -48,7 +49,7 @@ const roleLabel: Record<string, string> = {
         </p>
       </div>
 
-      <form method="POST" action="/api/auth/join" class="bg-surface-1 rounded-xl border border-surface-3 p-6 space-y-4">
+      <form method="POST" action="/api/auth/join" class="bg-surface-1 rounded-2xl border border-surface-3 p-6 space-y-4">
         <input type="hidden" name="code" value={code} />
 
         {errorMessage && (

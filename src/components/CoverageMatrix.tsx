@@ -112,11 +112,11 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
           <p className="text-xs text-text-muted">Cenários</p>
         </div>
         <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-red-400">{totalGaps}</p>
+          <p className="text-2xl font-bold text-severity-blocker">{totalGaps}</p>
           <p className="text-xs text-text-muted">Gaps</p>
         </div>
         <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-orange-400">{totalConflicts}</p>
+          <p className="text-2xl font-bold text-severity-major">{totalConflicts}</p>
           <p className="text-xs text-text-muted">Conflitos</p>
         </div>
       </div>
@@ -126,7 +126,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('all')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
+            filter === 'all' ? 'bg-primary-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Todos
@@ -134,7 +134,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('gaps')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'gaps' ? 'bg-red-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
+            filter === 'gaps' ? 'bg-severity-blocker text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Gaps ({totalGaps})
@@ -142,7 +142,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('conflicts')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'conflicts' ? 'bg-orange-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
+            filter === 'conflicts' ? 'bg-severity-major text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Conflitos ({totalConflicts})
@@ -177,12 +177,12 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                 <span className="text-sm font-medium text-text-primary">{section.title}</span>
                 <span className="text-xs text-text-muted">{section.coverage}% cobertura</span>
                 {section.gaps.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-900/50 text-red-300">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-severity-blocker/20 text-severity-blocker">
                     {section.gaps.length} gap(s)
                   </span>
                 )}
                 {section.conflicts.length > 0 && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-900/50 text-orange-300">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-severity-major/20 text-severity-major">
                     {section.conflicts.length} conflito(s)
                   </span>
                 )}
@@ -210,13 +210,13 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                       const isConflict = section.conflicts.includes(scenario.id);
                       return (
                         <tr key={scenario.id} className={`border-b border-surface-3 last:border-0 ${
-                          isGap ? 'bg-red-950/10' : isConflict ? 'bg-orange-950/10' : ''
+                          isGap ? 'bg-severity-blocker/5' : isConflict ? 'bg-severity-major/5' : ''
                         }`}>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
                               <span className="text-text-primary text-xs">{scenario.title}</span>
                               {scenario.persona && (
-                                <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-indigo-900/50 text-indigo-300">
+                                <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-primary-600/20 text-primary-400">
                                   {scenario.persona}
                                 </span>
                               )}
@@ -245,13 +245,13 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                           })}
                           <td className="text-center px-2 py-2">
                             {isGap && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-900/50 text-red-300">GAP</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-severity-blocker/20 text-severity-blocker">GAP</span>
                             )}
                             {isConflict && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-900/50 text-orange-300">CONFLITO</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-severity-major/20 text-severity-major">CONFLITO</span>
                             )}
                             {!isGap && !isConflict && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-900/50 text-green-300">OK</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-severity-enhancement/20 text-severity-enhancement">OK</span>
                             )}
                           </td>
                         </tr>

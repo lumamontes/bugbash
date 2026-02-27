@@ -203,10 +203,10 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Scenario Context Block */}
       {scenarioContext && (
-        <div className="bg-indigo-950/30 border border-indigo-800/40 rounded-lg p-4">
+        <div className="bg-primary-600/10 border border-primary-500/30 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xs font-medium text-indigo-400">Cenário vinculado</span>
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-900/50 text-indigo-300">
+            <span className="text-xs font-medium text-primary-400">Cenário vinculado</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary-600/20 text-primary-400">
               {scenarioContext.sectionTitle}
             </span>
           </div>

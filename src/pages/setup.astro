@@ -21,11 +21,13 @@ const errorMessage = error ? errorMessages[error] ?? 'Erro desconhecido.' : null
   <div class="min-h-screen flex items-center justify-center px-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-8">
+        <img src="https://cdn.arcotech.io/iris-ds/brand/arcotech/icon.svg" alt="Arcotech" width="48" height="48" class="mx-auto mb-3" />
         <h1 class="text-3xl font-bold text-text-primary">Bug Bash</h1>
         <p class="text-sm text-text-secondary mt-2">Configure sua organização para começar</p>
+        <img src="https://cdn.arcotech.io/iris-ds/illustrations/arcotech/planejamento.svg" alt="" class="mx-auto mt-6 w-56 h-auto" />
       </div>
 
-      <form method="POST" action="/api/auth/setup" class="bg-surface-1 rounded-xl border border-surface-3 p-6 space-y-4">
+      <form method="POST" action="/api/auth/setup" class="bg-surface-1 rounded-2xl border border-surface-3 p-6 space-y-4">
         {errorMessage && (
           <div class="bg-red-500/10 border border-red-500/20 text-red-400 text-sm rounded-lg px-4 py-3">
             {errorMessage}

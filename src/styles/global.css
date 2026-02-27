@@ -8,17 +8,22 @@
   --color-surface-2: var(--iris-ds-color-neutral-200);
   --color-surface-3: var(--iris-ds-color-neutral-300);
 
-  /* Primary — mapped from Iris info palette (blue accent) */
-  --color-primary-50: var(--iris-ds-color-info-700);
-  --color-primary-100: var(--iris-ds-color-info-600);
-  --color-primary-200: var(--iris-ds-color-info-600);
-  --color-primary-300: var(--iris-ds-color-info-500);
-  --color-primary-400: var(--iris-ds-color-info-500);
-  --color-primary-500: var(--iris-ds-color-info-400);
-  --color-primary-600: var(--iris-ds-color-info-300);
-  --color-primary-700: var(--iris-ds-color-info-200);
-  --color-primary-800: var(--iris-ds-color-info-200);
-  --color-primary-900: var(--iris-ds-color-info-100);
+  /* Primary — mapped from Arco brand blue */
+  --color-primary-50: var(--iris-ds-color-brand-arco-primary-700);
+  --color-primary-100: var(--iris-ds-color-brand-arco-primary-700);
+  --color-primary-200: var(--iris-ds-color-brand-arco-primary-600);
+  --color-primary-300: var(--iris-ds-color-brand-arco-primary-600);
+  --color-primary-400: var(--iris-ds-color-brand-arco-primary-500);
+  --color-primary-500: var(--iris-ds-color-brand-arco-primary-500);
+  --color-primary-600: var(--iris-ds-color-brand-arco-primary-400);
+  --color-primary-700: var(--iris-ds-color-brand-arco-primary-300);
+  --color-primary-800: var(--iris-ds-color-brand-arco-primary-200);
+  --color-primary-900: var(--iris-ds-color-brand-arco-primary-100);
+
+  /* Accent — Arco secondary (coral) */
+  --color-accent-400: var(--iris-ds-color-brand-arco-secondary-400);
+  --color-accent-500: var(--iris-ds-color-brand-arco-secondary-500);
+  --color-accent-600: var(--iris-ds-color-brand-arco-secondary-300);
 
   /* Severity colors (app-specific, not in Iris) */
   --color-severity-blocker: var(--iris-ds-color-danger-400);

@@ -113,7 +113,7 @@ export default function LinearExportModal({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setIsOpen(false)}>
           <div
-            className="bg-surface-1 border border-surface-3 rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+            className="bg-surface-1 border border-surface-3 rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}

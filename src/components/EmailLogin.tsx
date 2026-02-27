@@ -67,7 +67,7 @@ export default function EmailLogin() {
   }
 
   return (
-    <div className="bg-surface-1 rounded-xl border border-surface-3 p-6 space-y-4">
+    <div className="bg-surface-1 rounded-2xl border border-surface-3 p-6 space-y-4">
       <form onSubmit={handleSubmit}>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-text-secondary mb-1.5">
