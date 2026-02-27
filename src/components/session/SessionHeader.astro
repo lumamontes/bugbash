@@ -1,6 +1,7 @@
 ---
 import Badge from '@components/ui/Badge.astro';
 import SessionStatusControl from '@components/SessionStatusControl';
+import SessionEditModal from '@components/SessionEditModal';
 import { sessionStatusLabel, formatDate, formatDateTime } from '@lib/format';
 
 interface Props {
@@ -13,15 +14,31 @@ interface Props {
     scheduledAt: Date | null;
     startedAt: Date | null;
     endedAt: Date | null;
+    kickoffDuration: number | null;
+    executionDuration: number | null;
+    wrapupDuration: number | null;
     creatorName: string;
     createdAt: Date;
   };
   isFacilitator: boolean;
   isWrapupPhase: boolean;
   isClosed: boolean;
+  userRole?: string;
 }
 
-const { session, isFacilitator, isWrapupPhase, isClosed } = Astro.props;
+const { session, isFacilitator, isWrapupPhase, isClosed, userRole } = Astro.props;
+const isAdmin = userRole === 'admin';
+
+const editSession = {
+  id: session.id,
+  title: session.title,
+  description: session.description,
+  status: session.status,
+  scheduledAt: session.scheduledAt?.toISOString() ?? null,
+  kickoffDuration: session.kickoffDuration,
+  executionDuration: session.executionDuration,
+  wrapupDuration: session.wrapupDuration,
+};
 ---
 
 <div class="flex items-start justify-between mb-6">
@@ -41,6 +58,7 @@ const { session, isFacilitator, isWrapupPhase, isClosed } = Astro.props;
   </div>
   {isFacilitator && (
     <div class="flex items-center gap-3">
+      <SessionEditModal session={editSession} isAdmin={isAdmin} client:load />
       {(isClosed || isWrapupPhase) && (
         <a href={`/sessions/${session.id}/report`} class="inline-flex items-center px-4 py-2 bg-surface-2 border border-surface-3 hover:bg-surface-3 text-text-primary text-sm font-medium rounded-lg transition-colors">
           Relatório

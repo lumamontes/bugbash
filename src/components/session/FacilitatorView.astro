@@ -40,7 +40,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
 ---
 
 <div class="p-8">
-  <SessionHeader session={session} isFacilitator={true} isWrapupPhase={isWrapupPhase} isClosed={isClosed} />
+  <SessionHeader session={session} isFacilitator={true} isWrapupPhase={isWrapupPhase} isClosed={isClosed} userRole={user.role} />
 
   <!-- Timer (during active phases) -->
   {isActiveSession && (

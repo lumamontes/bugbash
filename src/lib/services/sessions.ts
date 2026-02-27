@@ -206,6 +206,8 @@ export async function createSession(data: {
   return id;
 }
 
+const phaseOrder = ['draft', 'scheduled', 'kickoff', 'execution', 'wrapup', 'closed'] as const;
+
 const validTransitions: Record<string, string> = {
   draft: 'scheduled',
   scheduled: 'kickoff',
@@ -213,6 +215,43 @@ const validTransitions: Record<string, string> = {
   execution: 'wrapup',
   wrapup: 'closed',
 };
+
+/** Update editable session properties. */
+export async function updateSession(
+  sessionId: string,
+  data: Partial<{
+    title: string;
+    description: string | null;
+    scheduledAt: Date | null;
+    kickoffDuration: number;
+    executionDuration: number;
+    wrapupDuration: number;
+  }>,
+) {
+  await db.update(sessions).set(data).where(eq(sessions.id, sessionId));
+}
+
+/** Rewind session to a previous phase. Returns error string or null on success. */
+export async function restartPhase(sessionId: string, currentStatus: string, targetStatus: string) {
+  const currentIndex = phaseOrder.indexOf(currentStatus as any);
+  const targetIndex = phaseOrder.indexOf(targetStatus as any);
+
+  if (targetIndex < 0 || currentIndex < 0) return 'Status inválido';
+  if (targetIndex >= currentIndex) return 'O status alvo deve ser anterior ao status atual';
+
+  const updates: Record<string, unknown> = { status: targetStatus };
+  // Reset startedAt if rewinding to before kickoff
+  if (targetIndex < phaseOrder.indexOf('kickoff')) {
+    updates.startedAt = null;
+  }
+  // Reset endedAt if rewinding to before closed
+  if (targetIndex < phaseOrder.indexOf('closed')) {
+    updates.endedAt = null;
+  }
+
+  await db.update(sessions).set(updates).where(eq(sessions.id, sessionId));
+  return null;
+}
 
 /** Transition session status. Returns error string or null on success. */
 export async function transitionStatus(sessionId: string, currentStatus: string, newStatus: string) {
