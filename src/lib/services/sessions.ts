@@ -240,7 +240,11 @@ export async function restartPhase(sessionId: string, currentStatus: string, tar
   if (targetIndex >= currentIndex) return 'O status alvo deve ser anterior ao status atual';
 
   const updates: Record<string, unknown> = { status: targetStatus };
-  // Reset startedAt if rewinding to before kickoff
+  // Reset startedAt to now when rewinding to kickoff (so timer restarts fresh)
+  if (targetStatus === 'kickoff') {
+    updates.startedAt = new Date();
+  }
+  // Reset startedAt to null if rewinding to before kickoff
   if (targetIndex < phaseOrder.indexOf('kickoff')) {
     updates.startedAt = null;
   }

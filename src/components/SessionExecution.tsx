@@ -1,4 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
+import { $user } from '../stores/sessionStore';
 import FormattedText from './FormattedText';
 
 interface Scenario {
@@ -31,8 +34,6 @@ interface Execution {
 }
 
 interface Props {
-  sessionId: string;
-  userId: string;
   sections: Section[];
   mode?: 'guided' | 'free';
 }
@@ -47,7 +48,9 @@ const statusConfig = {
 
 type ExecutionStatus = keyof typeof statusConfig;
 
-export default function SessionExecution({ sessionId, userId, sections, mode: initialMode = 'guided' }: Props) {
+export default function SessionExecution({ sections, mode: initialMode = 'guided' }: Props) {
+  const { id: sessionId } = useStore($session);
+  const { id: userId } = useStore($user);
   const [activeMode, setActiveMode] = useState<'guided' | 'free'>(initialMode);
   const [activeSectionId, setActiveSectionId] = useState<string>(sections[0]?.id || '');
   const [expandedScenario, setExpandedScenario] = useState<string | null>(null);
@@ -57,6 +60,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
 
   // Load existing executions
   useEffect(() => {
+    if (!sessionId) return;
     fetch(`/api/sessions/${sessionId}/coverage`)
       .then(r => r.json())
       .then((data: { participants: any[]; sections: any[] }) => {

@@ -1,46 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
-const inactiveStatuses = new Set(['draft', 'scheduled']);
-
-interface Props {
-  sessionId: string;
-  sessionTitle: string;
-}
-
-export default function SessionNotifier({ sessionId, sessionTitle }: Props) {
+/**
+ * Permission request UI for browser notifications.
+ * The actual notification firing is handled by StatusWatcher.
+ */
+export default function SessionNotifier() {
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>(
     typeof Notification !== 'undefined' ? Notification.permission : 'unsupported',
   );
-  const hasNotified = useRef(false);
 
   async function requestPermission() {
     if (typeof Notification === 'undefined') return;
     const result = await Notification.requestPermission();
     setPermission(result);
   }
-
-  useEffect(() => {
-    const evtSource = new EventSource(`/api/sessions/${sessionId}/sse`);
-
-    evtSource.addEventListener('status', (e) => {
-      const newStatus = e.data.trim();
-
-      if (!inactiveStatuses.has(newStatus) && !hasNotified.current) {
-        hasNotified.current = true;
-
-        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-          new Notification('Bug Bash', {
-            body: `A sessão "${sessionTitle}" começou!`,
-            icon: '/favicon.svg',
-          });
-        }
-
-        setTimeout(() => window.location.reload(), 500);
-      }
-    });
-
-    return () => evtSource.close();
-  }, [sessionId, sessionTitle]);
 
   if (permission === 'unsupported' || permission === 'denied') {
     return null;

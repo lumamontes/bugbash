@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
 
 interface Bug {
   id: string;
@@ -12,7 +14,6 @@ interface Bug {
 }
 
 interface Props {
-  sessionId: string;
   bugs: Bug[];
 }
 
@@ -31,7 +32,8 @@ const statusOptions = [
   { value: 'duplicate', label: 'Duplicado' },
 ];
 
-export default function TriageTable({ sessionId, bugs: initialBugs }: Props) {
+export default function TriageTable({ bugs: initialBugs }: Props) {
+  const { id: sessionId } = useStore($session);
   const [bugs, setBugs] = useState(initialBugs);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkSeverity, setBulkSeverity] = useState('');

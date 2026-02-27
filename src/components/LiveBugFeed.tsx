@@ -1,19 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-
-interface BugItem {
-  id: string;
-  title: string;
-  severity: string;
-  status: string;
-  reportedVia: string;
-  createdAt: string;
-  reporterName: string;
-}
-
-interface Props {
-  sessionId: string;
-  initialBugs: BugItem[];
-}
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
+import { $bugs, subscribeSSE, type BugItem } from '../stores/sseStore';
 
 const severityColors: Record<string, string> = {
   blocker: '#ef4444',
@@ -39,44 +27,23 @@ function timeAgo(dateStr: string): string {
   return `${hours}h`;
 }
 
-export default function LiveBugFeed({ sessionId, initialBugs }: Props) {
-  const [bugs, setBugs] = useState<BugItem[]>(initialBugs);
+export default function LiveBugFeed() {
+  const session = useStore($session);
+  const bugs = useStore($bugs);
   const [newCount, setNewCount] = useState(0);
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const prevLengthRef = useRef(bugs.length);
 
+  // Subscribe to shared SSE
+  useEffect(() => subscribeSSE(), []);
+
+  // Track new bugs
   useEffect(() => {
-    const es = new EventSource(`/api/sessions/${sessionId}/sse`);
-    eventSourceRef.current = es;
-
-    es.addEventListener('bugs', (e) => {
-      try {
-        const newBugs: BugItem[] = JSON.parse(e.data);
-        setBugs(prev => {
-          const existingIds = new Set(prev.map(b => b.id));
-          const unique = newBugs.filter(b => !existingIds.has(b.id));
-          if (unique.length > 0) {
-            setNewCount(c => c + unique.length);
-            return [...unique, ...prev];
-          }
-          return prev;
-        });
-      } catch {}
-    });
-
-    es.onerror = () => {
-      es.close();
-      // Reconnect after 5s
-      setTimeout(() => {
-        if (eventSourceRef.current === es) {
-          eventSourceRef.current = new EventSource(`/api/sessions/${sessionId}/sse`);
-        }
-      }, 5000);
-    };
-
-    return () => {
-      es.close();
-    };
-  }, [sessionId]);
+    const added = bugs.length - prevLengthRef.current;
+    if (added > 0) {
+      setNewCount(added);
+    }
+    prevLengthRef.current = bugs.length;
+  }, [bugs]);
 
   // Clear new count after 3s
   useEffect(() => {
@@ -110,7 +77,7 @@ export default function LiveBugFeed({ sessionId, initialBugs }: Props) {
           {bugs.map((bug, i) => (
             <a
               key={bug.id}
-              href={`/sessions/${sessionId}/bugs/${bug.id}`}
+              href={`/sessions/${session.id}/bugs/${bug.id}`}
               className={`block p-3 rounded-lg bg-surface-2 hover:bg-surface-3 transition-all ${
                 i < newCount ? 'ring-1 ring-primary-500/50' : ''
               }`}

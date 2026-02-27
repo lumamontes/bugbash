@@ -12,8 +12,6 @@ import { sessionStatusLabel, formatDateTime } from '@lib/format';
 
 interface Props {
   session: any;
-  user: any;
-  bugsList: any[];
   credentialsList: any[];
   resourcesList: any[];
   scriptsWithSteps: any[];
@@ -22,7 +20,7 @@ interface Props {
   participantsCount: number;
 }
 
-const { session, user, bugsList, credentialsList, resourcesList, scriptsWithSteps, sectionsList, bugsCount, participantsCount } = Astro.props;
+const { session, credentialsList, resourcesList, scriptsWithSteps, sectionsList, bugsCount, participantsCount } = Astro.props;
 
 const isActiveSession = ['kickoff', 'execution', 'wrapup'].includes(session.status);
 const isExecutionPhase = session.status === 'execution';
@@ -47,14 +45,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
   <!-- Timer (always visible during active phases) -->
   {isActiveSession && (
     <div class="mb-6">
-      <SessionTimer
-        status={session.status}
-        startedAt={session.startedAt?.toISOString() ?? null}
-        kickoffDuration={session.kickoffDuration ?? 15}
-        executionDuration={session.executionDuration ?? 60}
-        wrapupDuration={session.wrapupDuration ?? 15}
-        client:load
-      />
+      <SessionTimer client:load />
     </div>
   )}
 
@@ -70,7 +61,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
         {session.scheduledAt && (
           <p class="text-text-muted text-sm mt-4">Agendada para {formatDateTime(session.scheduledAt)}</p>
         )}
-        <SessionNotifier sessionId={session.id} sessionTitle={session.title} client:load />
+        <SessionNotifier client:load />
       </div>
     </Card>
   )}
@@ -124,12 +115,12 @@ const hasNewTestingJourney = sectionsList.length > 0;
       {hasNewTestingJourney ? (
         <Card>
           <h2 class="text-sm font-semibold text-text-primary mb-4">Roteiro de Testes</h2>
-          <SessionExecution sessionId={session.id} userId={user.id} sections={sectionsList} client:load />
+          <SessionExecution sections={sectionsList} client:load />
         </Card>
       ) : scriptsWithSteps.length > 0 ? (
         <Card>
           <h2 class="text-sm font-semibold text-text-primary mb-4">Scripts de Teste</h2>
-          <TestScriptExecution sessionId={session.id} scripts={scriptsWithSteps} client:load />
+          <TestScriptExecution scripts={scriptsWithSteps} client:load />
         </Card>
       ) : null}
 
@@ -141,9 +132,6 @@ const hasNewTestingJourney = sectionsList.length > 0;
               <div class="flex items-center justify-between p-3 rounded-lg bg-surface-2">
                 <div>
                   <span class="text-sm font-medium text-text-primary">{c.profileType}</span>
-                  {c.claimedBy === user.id && (
-                    <div class="text-xs text-text-muted mt-0.5 font-mono">{c.username} / {c.password}</div>
-                  )}
                 </div>
                 <div></div>
               </div>
@@ -157,7 +145,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
       )}
 
       <Card>
-        <LiveBugFeed sessionId={session.id} initialBugs={bugsList} client:load />
+        <LiveBugFeed client:load />
       </Card>
     </div>
   )}
@@ -174,8 +162,6 @@ const hasNewTestingJourney = sectionsList.length > 0;
           </p>
         </div>
       </Card>
-
-      {bugsList.length > 0 && <BugListCard sessionId={session.id} bugs={bugsList} />}
     </div>
   )}
 
@@ -201,8 +187,6 @@ const hasNewTestingJourney = sectionsList.length > 0;
           </div>
         </div>
       </Card>
-
-      {bugsList.length > 0 && <BugListCard sessionId={session.id} bugs={bugsList} />}
     </div>
   )}
 </div>

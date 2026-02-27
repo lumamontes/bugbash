@@ -1,13 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
-
-interface BadgeEvent {
-  id: string;
-  slug: string;
-  name: string;
-  description: string;
-  icon: string;
-  tier: string;
-}
+import { useStore } from '@nanostores/react';
+import { $badges, subscribeSSE, type BadgeEvent } from '../stores/sseStore';
 
 const tierColors: Record<string, string> = {
   bronze: '#cd7f32',
@@ -16,43 +9,33 @@ const tierColors: Record<string, string> = {
   platinum: '#e5e4e2',
 };
 
-interface Props {
-  sessionId: string;
-  userId: string;
-}
-
-export default function BadgeToast({ sessionId, userId }: Props) {
+export default function BadgeToast() {
+  const badges = useStore($badges);
   const [toasts, setToasts] = useState<BadgeEvent[]>([]);
   const shownRef = useRef<Set<string>>(new Set());
 
+  // Subscribe to shared SSE
+  useEffect(() => subscribeSSE(), []);
+
+  // React to new badge events
   useEffect(() => {
-    const evtSource = new EventSource(`/api/sessions/${sessionId}/sse`);
+    const newBadges = badges.filter(b => !shownRef.current.has(b.id));
+    if (newBadges.length > 0) {
+      newBadges.forEach(b => shownRef.current.add(b.id));
+      setToasts(prev => [...prev, ...newBadges]);
 
-    evtSource.addEventListener('badge', (e) => {
-      try {
-        const badges = JSON.parse(e.data) as BadgeEvent[];
-        const newBadges = badges.filter(b => !shownRef.current.has(b.id));
-
-        if (newBadges.length > 0) {
-          newBadges.forEach(b => shownRef.current.add(b.id));
-          setToasts(prev => [...prev, ...newBadges]);
-
-          // Fire confetti
-          import('canvas-confetti').then(mod => {
-            const confetti = mod.default;
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 },
-              colors: ['#6366f1', '#ffd700', '#cd7f32', '#22c55e'],
-            });
-          });
-        }
-      } catch {}
-    });
-
-    return () => evtSource.close();
-  }, [sessionId]);
+      // Fire confetti
+      import('canvas-confetti').then(mod => {
+        const confetti = mod.default;
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#6366f1', '#ffd700', '#cd7f32', '#22c55e'],
+        });
+      });
+    }
+  }, [badges]);
 
   useEffect(() => {
     if (toasts.length === 0) return;

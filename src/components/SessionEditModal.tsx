@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
+import { $user } from '../stores/sessionStore';
 
 const phaseOrder = ['draft', 'scheduled', 'kickoff', 'execution', 'wrapup', 'closed'] as const;
 const phaseLabels: Record<string, string> = {
@@ -10,21 +13,11 @@ const phaseLabels: Record<string, string> = {
   closed: 'Finalizada',
 };
 
-interface Props {
-  session: {
-    id: string;
-    title: string;
-    description: string | null;
-    status: string;
-    scheduledAt: string | null;
-    kickoffDuration: number | null;
-    executionDuration: number | null;
-    wrapupDuration: number | null;
-  };
-  isAdmin: boolean;
-}
+export default function SessionEditModal() {
+  const session = useStore($session);
+  const user = useStore($user);
+  const isAdmin = user.role === 'admin';
 
-export default function SessionEditModal({ session, isAdmin }: Props) {
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [restarting, setRestarting] = useState<string | null>(null);
@@ -33,9 +26,7 @@ export default function SessionEditModal({ session, isAdmin }: Props) {
 
   const [title, setTitle] = useState(session.title);
   const [description, setDescription] = useState(session.description ?? '');
-  const [scheduledAt, setScheduledAt] = useState(
-    session.scheduledAt ? new Date(session.scheduledAt).toISOString().slice(0, 16) : '',
-  );
+  const [scheduledAt, setScheduledAt] = useState('');
   const [kickoffDuration, setKickoffDuration] = useState(session.kickoffDuration ?? 15);
   const [executionDuration, setExecutionDuration] = useState(session.executionDuration ?? 60);
   const [wrapupDuration, setWrapupDuration] = useState(session.wrapupDuration ?? 15);

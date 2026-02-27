@@ -1,5 +1,7 @@
 ---
 import AppLayout from '../../layouts/app-layout.astro';
+import StoreInit from '@components/StoreInit';
+import StatusWatcher from '@components/StatusWatcher';
 import BadgeToast from '@components/BadgeToast';
 import ParticipantView from '@components/session/ParticipantView.astro';
 import FacilitatorView from '@components/session/FacilitatorView.astro';
@@ -38,14 +40,32 @@ const [counts, participantsList, credentialsList, bugsList, scriptsWithSteps, se
   getSectionsWithScenarios(id!),
   getTestResources(id!),
 ]);
+
+const storeSession = {
+  id: session.id,
+  title: session.title,
+  description: session.description,
+  status: session.status,
+  startedAt: session.startedAt?.toISOString() ?? null,
+  kickoffDuration: session.kickoffDuration ?? 15,
+  executionDuration: session.executionDuration ?? 60,
+  wrapupDuration: session.wrapupDuration ?? 15,
+};
+
+const storeUser = {
+  id: user.id,
+  role: user.role,
+  isFacilitator,
+};
 ---
 
 <AppLayout title={`${session.title} — Bug Bash`}>
+  <StoreInit session={storeSession} user={storeUser} initialBugs={bugsList} client:load />
+  <StatusWatcher client:load />
+
   {!isFacilitator ? (
     <ParticipantView
       session={session}
-      user={user}
-      bugsList={bugsList}
       credentialsList={credentialsList}
       resourcesList={resourcesList}
       scriptsWithSteps={scriptsWithSteps}
@@ -56,7 +76,6 @@ const [counts, participantsList, credentialsList, bugsList, scriptsWithSteps, se
   ) : (
     <FacilitatorView
       session={session}
-      user={user}
       bugsList={bugsList}
       credentialsList={credentialsList}
       resourcesList={resourcesList}
@@ -68,6 +87,6 @@ const [counts, participantsList, credentialsList, bugsList, scriptsWithSteps, se
   )}
 
   {(session.status === 'execution' || session.status === 'kickoff') && (
-    <BadgeToast sessionId={id!} userId={user.id} client:load />
+    <BadgeToast client:load />
   )}
 </AppLayout>

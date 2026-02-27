@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
 import FormattedText from './FormattedText';
 
 interface Step {
@@ -22,7 +24,6 @@ interface StepResult {
 }
 
 interface Props {
-  sessionId: string;
   scripts: Script[];
 }
 
@@ -47,14 +48,15 @@ const statusButtons = [
   { value: 'skipped', label: 'Ignorado', color: '#64748b' },
 ];
 
-export default function TestScriptExecution({ sessionId, scripts }: Props) {
+export default function TestScriptExecution({ scripts }: Props) {
+  const { id: sessionId } = useStore($session);
   const [results, setResults] = useState<Record<string, string>>({});
   const [expandedScript, setExpandedScript] = useState<string | null>(scripts[0]?.id || null);
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
   // Load existing results
   useEffect(() => {
-    if (scripts.length === 0) return;
+    if (!sessionId || scripts.length === 0) return;
     const scriptId = scripts[0].id;
     fetch(`/api/sessions/${sessionId}/scripts/${scriptId}/results`)
       .then(r => r.json())

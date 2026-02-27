@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
 
 const transitions: Record<string, { next: string; label: string }> = {
   draft: { next: 'scheduled', label: 'Agendar' },
@@ -8,21 +10,17 @@ const transitions: Record<string, { next: string; label: string }> = {
   wrapup: { next: 'closed', label: 'Finalizar' },
 };
 
-interface Props {
-  sessionId: string;
-  currentStatus: string;
-}
-
-export default function SessionStatusControl({ sessionId, currentStatus }: Props) {
+export default function SessionStatusControl() {
+  const session = useStore($session);
   const [loading, setLoading] = useState(false);
-  const transition = transitions[currentStatus];
+  const transition = transitions[session.status];
 
   if (!transition) return null;
 
   async function handleClick() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/sessions/${sessionId}/status`, {
+      const res = await fetch(`/api/sessions/${session.id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: transition!.next }),

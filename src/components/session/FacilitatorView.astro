@@ -15,7 +15,6 @@ import { bugSeverityLabel, bugStatusLabel, formatDate } from '@lib/format';
 
 interface Props {
   session: any;
-  user: any;
   bugsList: any[];
   credentialsList: any[];
   resourcesList: any[];
@@ -30,7 +29,7 @@ interface Props {
   };
 }
 
-const { session, user, bugsList, credentialsList, resourcesList, participantsList, scriptsWithSteps, sectionsList, counts } = Astro.props;
+const { session, bugsList, credentialsList, resourcesList, participantsList, scriptsWithSteps, sectionsList, counts } = Astro.props;
 
 const isActiveSession = ['kickoff', 'execution', 'wrapup'].includes(session.status);
 const isExecutionPhase = session.status === 'execution';
@@ -40,19 +39,12 @@ const hasNewTestingJourney = sectionsList.length > 0;
 ---
 
 <div class="p-8">
-  <SessionHeader session={session} isFacilitator={true} isWrapupPhase={isWrapupPhase} isClosed={isClosed} userRole={user.role} />
+  <SessionHeader session={session} isFacilitator={true} isWrapupPhase={isWrapupPhase} isClosed={isClosed} />
 
   <!-- Timer (during active phases) -->
   {isActiveSession && (
     <div class="mb-6">
-      <SessionTimer
-        status={session.status}
-        startedAt={session.startedAt?.toISOString() ?? null}
-        kickoffDuration={session.kickoffDuration ?? 15}
-        executionDuration={session.executionDuration ?? 60}
-        wrapupDuration={session.wrapupDuration ?? 15}
-        client:load
-      />
+      <SessionTimer client:load />
     </div>
   )}
 
@@ -86,9 +78,9 @@ const hasNewTestingJourney = sectionsList.length > 0;
             </div>
           </div>
           {hasNewTestingJourney ? (
-            <SessionExecution sessionId={session.id} userId={user.id} sections={sectionsList} client:load />
+            <SessionExecution sections={sectionsList} client:load />
           ) : scriptsWithSteps.length > 0 ? (
-            <TestScriptExecution sessionId={session.id} scripts={scriptsWithSteps} client:load />
+            <TestScriptExecution scripts={scriptsWithSteps} client:load />
           ) : (
             <p class="text-text-muted text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>
           )}
@@ -99,25 +91,25 @@ const hasNewTestingJourney = sectionsList.length > 0;
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-lg font-semibold text-text-primary">Matriz de Cobertura</h2>
             </div>
-            <CoverageMatrix sessionId={session.id} autoRefresh={true} client:load />
+            <CoverageMatrix autoRefresh={true} client:load />
           </Card>
         )}
       </div>
 
       <Card>
-        <LiveBugFeed sessionId={session.id} initialBugs={bugsList} client:load />
+        <LiveBugFeed client:load />
       </Card>
     </div>
   ) : isWrapupPhase ? (
     <Card class="mb-8">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-lg font-semibold text-text-primary">Triagem de Bugs</h2>
-        <span class="text-xs text-text-muted">{bugsList.length} bug(s)</span>
+        <span class="text-xs text-text-muted">{counts.bugsCount} bug(s)</span>
       </div>
       {bugsList.length === 0 ? (
         <p class="text-text-muted text-sm py-4 text-center">Nenhum bug para triagem.</p>
       ) : (
-        <TriageTable sessionId={session.id} bugs={bugsList} client:load />
+        <TriageTable bugs={bugsList} client:load />
       )}
     </Card>
   ) : null}
@@ -162,7 +154,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
           </div>
         </div>
         {isActiveSession && !isExecutionPhase && scriptsWithSteps.length > 0 ? (
-          <TestScriptExecution sessionId={session.id} scripts={scriptsWithSteps} client:load />
+          <TestScriptExecution scripts={scriptsWithSteps} client:load />
         ) : scriptsWithSteps.length === 0 ? (
           <p class="text-text-muted text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>
         ) : (

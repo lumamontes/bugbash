@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useStore } from '@nanostores/react';
+import { $session } from '../stores/sessionStore';
 
 interface Participant {
   userId: string;
@@ -28,7 +30,6 @@ interface CoverageData {
 }
 
 interface Props {
-  sessionId: string;
   autoRefresh?: boolean;
 }
 
@@ -49,13 +50,15 @@ const statusLabels: Record<string, string> = {
   skipped: 'Ignorado',
 };
 
-export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props) {
+export default function CoverageMatrix({ autoRefresh = false }: Props) {
+  const { id: sessionId } = useStore($session);
   const [data, setData] = useState<CoverageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'gaps' | 'conflicts'>('all');
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const fetchData = () => {
+    if (!sessionId) return;
     fetch(`/api/sessions/${sessionId}/coverage`)
       .then(r => r.json())
       .then((d: CoverageData) => {
