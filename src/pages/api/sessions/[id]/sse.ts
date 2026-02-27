@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db } from '@db/index';
 import { sessions, bugs, users, userBadges, badgeDefinitions } from '@db/schema';
-import { eq, desc, gt, and } from 'drizzle-orm';
+import { eq, desc, gt, and, count } from 'drizzle-orm';
 import { requireSessionContext } from '@lib/services/helpers';
 
 export const GET: APIRoute = async ({ params, locals, request }) => {
@@ -11,6 +11,8 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
   const encoder = new TextEncoder();
   let lastChecked = new Date();
   let lastBadgeChecked = new Date();
+  let lastCount = -1;
+  let lastStatus = '';
   let closed = false;
 
   const stream = new ReadableStream({
@@ -24,7 +26,8 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
         }
 
         try {
-          const allBugs = await db
+          // 1. Only fetch bugs created after last check (not all bugs)
+          const newBugs = await db
             .select({
               id: bugs.id,
               title: bugs.title,
@@ -36,29 +39,41 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
             })
             .from(bugs)
             .innerJoin(users, eq(bugs.reportedBy, users.id))
-            .where(eq(bugs.sessionId, params.id!))
+            .where(and(
+              eq(bugs.sessionId, params.id!),
+              gt(bugs.createdAt, lastChecked),
+            ))
             .orderBy(desc(bugs.createdAt));
-          const newBugs = allBugs.filter(b => b.createdAt > lastChecked);
 
           if (newBugs.length > 0) {
             lastChecked = new Date();
-            const data = JSON.stringify(newBugs);
-            controller.enqueue(encoder.encode(`event: bugs\ndata: ${data}\n\n`));
+            controller.enqueue(encoder.encode(`event: bugs\ndata: ${JSON.stringify(newBugs)}\n\n`));
           }
 
-          const totalCount = (await db
-            .select({ id: bugs.id })
+          // 2. Use SQL count() instead of fetching all rows
+          const [{ total }] = await db
+            .select({ total: count() })
             .from(bugs)
-            .where(eq(bugs.sessionId, params.id!)))
-            .length;
+            .where(eq(bugs.sessionId, params.id!));
 
-          controller.enqueue(encoder.encode(`event: count\ndata: ${totalCount}\n\n`));
+          // Only send count when it changes
+          if (total !== lastCount) {
+            lastCount = total;
+            controller.enqueue(encoder.encode(`event: count\ndata: ${total}\n\n`));
+          }
 
-          const currentSession = (await db.select({ status: sessions.status }).from(sessions).where(eq(sessions.id, params.id!)))[0];
-          if (currentSession) {
+          // 3. Only send status when it changes
+          const [currentSession] = await db
+            .select({ status: sessions.status })
+            .from(sessions)
+            .where(eq(sessions.id, params.id!));
+
+          if (currentSession && currentSession.status !== lastStatus) {
+            lastStatus = currentSession.status;
             controller.enqueue(encoder.encode(`event: status\ndata: ${currentSession.status}\n\n`));
           }
 
+          // 4. Badges — already filtered by timestamp, keep as-is
           const recentBadges = await db
             .select({
               id: userBadges.id,
@@ -84,7 +99,7 @@ export const GET: APIRoute = async ({ params, locals, request }) => {
           clearInterval(interval);
           try { controller.close(); } catch {}
         }
-      }, 3000);
+      }, 5000);
 
       request.signal.addEventListener('abort', () => {
         closed = true;
