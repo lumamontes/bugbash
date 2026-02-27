@@ -105,7 +105,7 @@ export default function LinearExportModal({
     <>
       <button
         onClick={openModal}
-        className="inline-flex items-center px-3 py-1.5 bg-[#1a1a24] border border-[#242430] text-[#f1f5f9] text-xs font-medium rounded-lg hover:bg-[#242430] transition-colors"
+        className="inline-flex items-center px-3 py-1.5 bg-surface-2 border border-surface-3 text-text-primary text-xs font-medium rounded-lg hover:bg-surface-3 transition-colors"
       >
         Exportar para Linear
       </button>
@@ -113,33 +113,33 @@ export default function LinearExportModal({
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={() => setIsOpen(false)}>
           <div
-            className="bg-[#12121a] border border-[#242430] rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
+            className="bg-surface-1 border border-surface-3 rounded-xl w-full max-w-2xl max-h-[80vh] flex flex-col"
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#242430]">
-              <h2 className="text-sm font-semibold text-[#f1f5f9]">Exportar para Linear</h2>
-              <button onClick={() => setIsOpen(false)} className="text-[#64748b] hover:text-[#f1f5f9] text-lg">&times;</button>
+            <div className="flex items-center justify-between px-6 py-4 border-b border-surface-3">
+              <h2 className="text-sm font-semibold text-text-primary">Exportar para Linear</h2>
+              <button onClick={() => setIsOpen(false)} className="text-text-muted hover:text-text-primary text-lg">&times;</button>
             </div>
 
             {loading ? (
               <div className="flex-1 flex items-center justify-center py-16">
                 <div className="space-y-3 w-full max-w-md px-6">
-                  <div className="h-4 bg-[#242430] rounded animate-pulse" />
-                  <div className="h-4 bg-[#242430] rounded animate-pulse w-3/4" />
-                  <div className="h-20 bg-[#242430] rounded animate-pulse mt-4" />
+                  <div className="h-4 bg-surface-3 rounded animate-pulse" />
+                  <div className="h-4 bg-surface-3 rounded animate-pulse w-3/4" />
+                  <div className="h-20 bg-surface-3 rounded animate-pulse mt-4" />
                 </div>
               </div>
             ) : (
               <>
                 {/* Tabs */}
-                <div className="flex border-b border-[#242430]">
+                <div className="flex border-b border-surface-3">
                   <button
                     onClick={() => switchTab('suggested')}
                     className={`px-6 py-2.5 text-xs font-medium transition-colors ${
                       tab === 'suggested'
-                        ? 'text-[#818cf8] border-b-2 border-[#6366f1]'
-                        : 'text-[#64748b] hover:text-[#f1f5f9]'
+                        ? 'text-primary-400 border-b-2 border-primary-500'
+                        : 'text-text-muted hover:text-text-primary'
                     }`}
                   >
                     AI Sugerido
@@ -148,8 +148,8 @@ export default function LinearExportModal({
                     onClick={() => switchTab('original')}
                     className={`px-6 py-2.5 text-xs font-medium transition-colors ${
                       tab === 'original'
-                        ? 'text-[#818cf8] border-b-2 border-[#6366f1]'
-                        : 'text-[#64748b] hover:text-[#f1f5f9]'
+                        ? 'text-primary-400 border-b-2 border-primary-500'
+                        : 'text-text-muted hover:text-text-primary'
                     }`}
                   >
                     Original
@@ -159,36 +159,36 @@ export default function LinearExportModal({
                 {/* Editable fields */}
                 <div className="flex-1 overflow-auto p-6 space-y-4">
                   <div>
-                    <label className="block text-xs text-[#64748b] mb-1.5">Título</label>
+                    <label className="block text-xs text-text-muted mb-1.5">Título</label>
                     <input
                       value={editTitle}
                       onChange={e => setEditTitle(e.target.value)}
-                      className="w-full px-3 py-2 bg-[#1a1a24] border border-[#242430] rounded-lg text-sm text-[#f1f5f9] focus:outline-none focus:ring-1 focus:ring-[#6366f1]"
+                      className="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-sm text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs text-[#64748b] mb-1.5">Descrição (Markdown)</label>
+                    <label className="block text-xs text-text-muted mb-1.5">Descrição (Markdown)</label>
                     <textarea
                       value={editDescription}
                       onChange={e => setEditDescription(e.target.value)}
                       rows={12}
-                      className="w-full px-3 py-2 bg-[#1a1a24] border border-[#242430] rounded-lg text-sm text-[#f1f5f9] font-mono focus:outline-none focus:ring-1 focus:ring-[#6366f1] resize-none"
+                      className="w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-sm text-text-primary font-mono focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none"
                     />
                   </div>
                 </div>
 
                 {/* Footer */}
-                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#242430]">
+                <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-surface-3">
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="px-4 py-2 text-xs text-[#94a3b8] hover:text-[#f1f5f9] transition-colors"
+                    className="px-4 py-2 text-xs text-text-secondary hover:text-text-primary transition-colors"
                   >
                     Cancelar
                   </button>
                   <button
                     onClick={handleExport}
                     disabled={exporting || !editTitle}
-                    className="px-4 py-2 bg-[#5e6ad2] hover:bg-[#4f46e5] disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
+                    className="px-4 py-2 bg-[#5e6ad2] hover:bg-primary-600 disabled:opacity-50 text-white text-xs font-medium rounded-lg transition-colors"
                   >
                     {exporting ? 'Exportando...' : 'Exportar'}
                   </button>

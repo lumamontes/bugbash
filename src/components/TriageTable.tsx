@@ -17,10 +17,10 @@ interface Props {
 }
 
 const severityOptions = [
-  { value: 'blocker', label: 'Bloqueante', color: '#ef4444' },
-  { value: 'major', label: 'Grave', color: '#f97316' },
-  { value: 'minor', label: 'Menor', color: '#eab308' },
-  { value: 'enhancement', label: 'Melhoria', color: '#22c55e' },
+  { value: 'blocker', label: 'Bloqueante', color: 'var(--color-severity-blocker)' },
+  { value: 'major', label: 'Grave', color: 'var(--color-severity-major)' },
+  { value: 'minor', label: 'Menor', color: 'var(--color-severity-minor)' },
+  { value: 'enhancement', label: 'Melhoria', color: 'var(--color-severity-enhancement)' },
 ];
 
 const statusOptions = [
@@ -88,14 +88,14 @@ export default function TriageTable({ sessionId, bugs: initialBugs }: Props) {
     setSelected(new Set());
   }
 
-  const selectClass = 'px-2 py-1 bg-[#1a1a24] border border-[#242430] rounded text-xs text-[#f1f5f9] focus:outline-none focus:ring-1 focus:ring-[#6366f1]';
+  const selectClass = 'px-2 py-1 bg-surface-2 border border-surface-3 rounded text-xs text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-500';
 
   return (
     <div>
       {/* Bulk actions */}
       {selected.size > 0 && (
-        <div className="flex items-center gap-3 mb-4 p-3 bg-[#6366f1]/10 border border-[#6366f1]/30 rounded-lg">
-          <span className="text-xs text-[#818cf8] font-medium">{selected.size} selecionado(s)</span>
+        <div className="flex items-center gap-3 mb-4 p-3 bg-primary-500/10 border border-primary-500/30 rounded-lg">
+          <span className="text-xs text-primary-400 font-medium">{selected.size} selecionado(s)</span>
           <select value={bulkSeverity} onChange={e => setBulkSeverity(e.target.value)} className={selectClass}>
             <option value="">Severidade...</option>
             {severityOptions.map(s => (
@@ -111,7 +111,7 @@ export default function TriageTable({ sessionId, bugs: initialBugs }: Props) {
           <button
             onClick={applyBulk}
             disabled={!bulkSeverity && !bulkStatus}
-            className="px-3 py-1 bg-[#4f46e5] hover:bg-[#4338ca] disabled:opacity-50 text-white text-xs rounded transition-colors"
+            className="px-3 py-1 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs rounded transition-colors"
           >
             Aplicar
           </button>
@@ -121,37 +121,37 @@ export default function TriageTable({ sessionId, bugs: initialBugs }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#242430]">
+            <tr className="border-b border-surface-3">
               <th className="px-3 py-2 w-8">
                 <input
                   type="checkbox"
                   checked={selected.size === bugs.length && bugs.length > 0}
                   onChange={toggleAll}
-                  className="rounded border-[#242430] bg-[#1a1a24] text-[#6366f1] focus:ring-[#6366f1]"
+                  className="rounded border-surface-3 bg-surface-2 text-primary-500 focus:ring-primary-500"
                 />
               </th>
-              <th className="text-left px-3 py-2 text-[#64748b] font-medium text-xs">Título</th>
-              <th className="text-left px-3 py-2 text-[#64748b] font-medium text-xs w-36">Severidade</th>
-              <th className="text-left px-3 py-2 text-[#64748b] font-medium text-xs w-36">Status</th>
-              <th className="text-left px-3 py-2 text-[#64748b] font-medium text-xs">Reporter</th>
-              <th className="text-left px-3 py-2 text-[#64748b] font-medium text-xs w-28">Linear</th>
+              <th className="text-left px-3 py-2 text-text-muted font-medium text-xs">Título</th>
+              <th className="text-left px-3 py-2 text-text-muted font-medium text-xs w-36">Severidade</th>
+              <th className="text-left px-3 py-2 text-text-muted font-medium text-xs w-36">Status</th>
+              <th className="text-left px-3 py-2 text-text-muted font-medium text-xs">Reporter</th>
+              <th className="text-left px-3 py-2 text-text-muted font-medium text-xs w-28">Linear</th>
             </tr>
           </thead>
           <tbody>
             {bugs.map(bug => (
-              <tr key={bug.id} className={`border-b border-[#242430] last:border-0 ${selected.has(bug.id) ? 'bg-[#6366f1]/5' : 'hover:bg-[#1a1a24]'} transition-colors`}>
+              <tr key={bug.id} className={`border-b border-surface-3 last:border-0 ${selected.has(bug.id) ? 'bg-primary-500/5' : 'hover:bg-surface-2'} transition-colors`}>
                 <td className="px-3 py-2">
                   <input
                     type="checkbox"
                     checked={selected.has(bug.id)}
                     onChange={() => toggleSelect(bug.id)}
-                    className="rounded border-[#242430] bg-[#1a1a24] text-[#6366f1] focus:ring-[#6366f1]"
+                    className="rounded border-surface-3 bg-surface-2 text-primary-500 focus:ring-primary-500"
                   />
                 </td>
                 <td className="px-3 py-2">
                   <a
                     href={`/sessions/${sessionId}/bugs/${bug.id}`}
-                    className="text-[#f1f5f9] hover:text-[#818cf8] font-medium"
+                    className="text-text-primary hover:text-primary-400 font-medium"
                   >
                     {bug.title}
                   </a>
@@ -181,19 +181,19 @@ export default function TriageTable({ sessionId, bugs: initialBugs }: Props) {
                     ))}
                   </select>
                 </td>
-                <td className="px-3 py-2 text-[#94a3b8] text-xs">{bug.reporterName}</td>
+                <td className="px-3 py-2 text-text-secondary text-xs">{bug.reporterName}</td>
                 <td className="px-3 py-2">
                   {bug.linearIssueUrl ? (
                     <a
                       href={bug.linearIssueUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#5e6ad2] hover:text-[#818cf8] text-xs font-medium"
+                      className="text-[#5e6ad2] hover:text-primary-400 text-xs font-medium"
                     >
                       {bug.linearIssueId}
                     </a>
                   ) : (
-                    <span className="text-[#64748b] text-xs">—</span>
+                    <span className="text-text-muted text-xs">—</span>
                   )}
                 </td>
               </tr>

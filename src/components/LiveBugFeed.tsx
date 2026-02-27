@@ -90,39 +90,39 @@ export default function LiveBugFeed({ sessionId, initialBugs }: Props) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-[#f1f5f9]">Bug Feed</h3>
+          <h3 className="text-sm font-semibold text-text-primary">Bug Feed</h3>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 bg-[#22c55e] rounded-full animate-pulse" />
-            <span className="text-xs text-[#64748b]">ao vivo</span>
+            <span className="w-2 h-2 bg-severity-enhancement rounded-full animate-pulse" />
+            <span className="text-xs text-text-muted">ao vivo</span>
           </span>
         </div>
         {newCount > 0 && (
-          <span className="text-xs bg-[#6366f1]/20 text-[#818cf8] px-2 py-0.5 rounded-full animate-bounce">
+          <span className="text-xs bg-primary-500/20 text-primary-400 px-2 py-0.5 rounded-full animate-bounce">
             +{newCount} novo(s)
           </span>
         )}
       </div>
 
       {bugs.length === 0 ? (
-        <p className="text-[#64748b] text-sm py-8 text-center">Nenhum bug reportado ainda.</p>
+        <p className="text-text-muted text-sm py-8 text-center">Nenhum bug reportado ainda.</p>
       ) : (
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {bugs.map((bug, i) => (
             <a
               key={bug.id}
               href={`/sessions/${sessionId}/bugs/${bug.id}`}
-              className={`block p-3 rounded-lg bg-[#1a1a24] hover:bg-[#242430] transition-all ${
-                i < newCount ? 'ring-1 ring-[#6366f1]/50' : ''
+              className={`block p-3 rounded-lg bg-surface-2 hover:bg-surface-3 transition-all ${
+                i < newCount ? 'ring-1 ring-primary-500/50' : ''
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-[#f1f5f9] truncate">{bug.title}</p>
+                  <p className="text-sm font-medium text-text-primary truncate">{bug.title}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-[#94a3b8]">{bug.reporterName}</span>
-                    <span className="text-xs text-[#64748b]">{timeAgo(bug.createdAt)}</span>
+                    <span className="text-xs text-text-secondary">{bug.reporterName}</span>
+                    <span className="text-xs text-text-muted">{timeAgo(bug.createdAt)}</span>
                     {bug.reportedVia === 'widget' && (
-                      <span className="text-[10px] bg-[#6366f1]/20 text-[#818cf8] px-1.5 py-0.5 rounded">widget</span>
+                      <span className="text-[10px] bg-primary-500/20 text-primary-400 px-1.5 py-0.5 rounded">widget</span>
                     )}
                   </div>
                 </div>

@@ -67,30 +67,30 @@ export default function SessionTimer({ status, startedAt, kickoffDuration, execu
   const isOvertime = remaining < 0;
   const isWarning = remaining > 0 && remaining <= 300; // last 5 min
 
-  const barColor = isOvertime ? '#ef4444' : isWarning ? '#eab308' : '#6366f1';
+  const barColor = isOvertime ? 'var(--color-severity-blocker)' : isWarning ? 'var(--color-severity-minor)' : 'var(--color-primary-500)';
 
   return (
-    <div className="bg-[#111118] border border-[#242430] rounded-xl p-4">
+    <div className="bg-surface-1 border border-surface-3 rounded-xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${isWarning || isOvertime ? 'animate-pulse' : ''}`} style={{ backgroundColor: barColor }} />
-          <span className="text-xs font-medium text-[#94a3b8]">{phaseLabel}</span>
+          <span className="text-xs font-medium text-text-secondary">{phaseLabel}</span>
         </div>
         <span
-          className={`text-lg font-mono font-bold ${isOvertime ? 'text-[#ef4444]' : isWarning ? 'text-[#eab308]' : 'text-[#f1f5f9]'}`}
+          className={`text-lg font-mono font-bold ${isOvertime ? 'text-severity-blocker' : isWarning ? 'text-severity-minor' : 'text-text-primary'}`}
         >
           {formatTime(remaining)}
         </span>
       </div>
-      <div className="w-full bg-[#242430] rounded-full h-1.5">
+      <div className="w-full bg-surface-3 rounded-full h-1.5">
         <div
           className="h-1.5 rounded-full transition-all duration-1000"
           style={{ width: `${progress}%`, backgroundColor: barColor }}
         />
       </div>
       <div className="flex items-center justify-between mt-1">
-        <span className="text-[10px] text-[#64748b]">0:00</span>
-        <span className="text-[10px] text-[#64748b]">{formatTime(phaseDuration)}</span>
+        <span className="text-[10px] text-text-muted">0:00</span>
+        <span className="text-[10px] text-text-muted">{formatTime(phaseDuration)}</span>
       </div>
     </div>
   );

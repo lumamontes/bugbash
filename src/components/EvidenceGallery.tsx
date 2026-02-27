@@ -31,13 +31,13 @@ export default function EvidenceGallery({ items, bugTitle, severity, reporterNam
               <img
                 src={ev.url}
                 alt={ev.filename}
-                className="w-full h-32 object-cover rounded-lg border border-[#242430] group-hover:border-[#6366f1] transition-colors"
+                className="w-full h-32 object-cover rounded-lg border border-surface-3 group-hover:border-primary-500 transition-colors"
               />
             ) : (
-              <div className="w-full h-32 bg-[#1a1a24] rounded-lg border border-[#242430] group-hover:border-[#6366f1] transition-colors flex items-center justify-center">
+              <div className="w-full h-32 bg-surface-2 rounded-lg border border-surface-3 group-hover:border-primary-500 transition-colors flex items-center justify-center">
                 <div className="text-center">
                   <p className="text-2xl">&#127909;</p>
-                  <p className="text-xs text-[#64748b] mt-1">{ev.filename}</p>
+                  <p className="text-xs text-text-muted mt-1">{ev.filename}</p>
                 </div>
               </div>
             )}

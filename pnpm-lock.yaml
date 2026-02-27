@@ -11,6 +11,9 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.78.0
         version: 0.78.0(zod@3.25.76)
+      '@arcotech-services/iris-tokens':
+        specifier: ^3.17.0
+        version: 3.17.0
       '@astrojs/node':
         specifier: ^9.1.3
         version: 9.5.4(astro@5.17.3(@types/node@25.3.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2))
@@ -100,6 +103,9 @@ packages:
     peerDependenciesMeta:
       zod:
         optional: true
+
+  '@arcotech-services/iris-tokens@3.17.0':
+    resolution: {integrity: sha512-/tzgb0tXXzMrs5s+5hsus3seHwgisiVAB8ZDbEBaTIQpT4C8Hv97fA1T8M/6JKUJwFdkTy1Yw66kOh1Su/pzUg==, tarball: https://npm.pkg.github.com/download/@arcotech-services/iris-tokens/3.17.0/f97ff760f224eafb796e1d2a19141818f703a5e4}
 
   '@astrojs/check@0.9.6':
     resolution: {integrity: sha512-jlaEu5SxvSgmfGIFfNgcn5/f+29H61NJzEMfAZ82Xopr4XBchXB1GVlcJsE+elUlsYSbXlptZLX+JMG3b/wZEA==}
@@ -3154,6 +3160,8 @@ snapshots:
       json-schema-to-ts: 3.1.1
     optionalDependencies:
       zod: 3.25.76
+
+  '@arcotech-services/iris-tokens@3.17.0': {}
 
   '@astrojs/check@0.9.6(prettier@3.8.1)(typescript@5.9.3)':
     dependencies:

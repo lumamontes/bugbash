@@ -79,7 +79,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-sm text-[#64748b]">Carregando matriz de cobertura...</div>
+        <div className="text-sm text-text-muted">Carregando matriz de cobertura...</div>
       </div>
     );
   }
@@ -87,7 +87,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
   if (!data || data.sections.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-sm text-[#64748b]">Nenhum cenário de teste cadastrado.</p>
+        <p className="text-sm text-text-muted">Nenhum cenário de teste cadastrado.</p>
       </div>
     );
   }
@@ -103,21 +103,21 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
     <div className="space-y-4">
       {/* Summary Stats */}
       <div className="grid grid-cols-4 gap-3">
-        <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-[#f1f5f9]">{overallCoverage}%</p>
-          <p className="text-xs text-[#64748b]">Cobertura</p>
+        <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
+          <p className="text-2xl font-bold text-text-primary">{overallCoverage}%</p>
+          <p className="text-xs text-text-muted">Cobertura</p>
         </div>
-        <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-3 text-center">
-          <p className="text-2xl font-bold text-[#f1f5f9]">{totalScenarios}</p>
-          <p className="text-xs text-[#64748b]">Cenários</p>
+        <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
+          <p className="text-2xl font-bold text-text-primary">{totalScenarios}</p>
+          <p className="text-xs text-text-muted">Cenários</p>
         </div>
-        <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-3 text-center">
+        <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
           <p className="text-2xl font-bold text-red-400">{totalGaps}</p>
-          <p className="text-xs text-[#64748b]">Gaps</p>
+          <p className="text-xs text-text-muted">Gaps</p>
         </div>
-        <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-3 text-center">
+        <div className="bg-surface-2 border border-surface-3 rounded-lg p-3 text-center">
           <p className="text-2xl font-bold text-orange-400">{totalConflicts}</p>
-          <p className="text-xs text-[#64748b]">Conflitos</p>
+          <p className="text-xs text-text-muted">Conflitos</p>
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('all')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-[#1a1a24] text-[#94a3b8] hover:text-white'
+            filter === 'all' ? 'bg-indigo-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Todos
@@ -134,7 +134,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('gaps')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'gaps' ? 'bg-red-600 text-white' : 'bg-[#1a1a24] text-[#94a3b8] hover:text-white'
+            filter === 'gaps' ? 'bg-red-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Gaps ({totalGaps})
@@ -142,14 +142,14 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         <button
           onClick={() => setFilter('conflicts')}
           className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            filter === 'conflicts' ? 'bg-orange-600 text-white' : 'bg-[#1a1a24] text-[#94a3b8] hover:text-white'
+            filter === 'conflicts' ? 'bg-orange-600 text-white' : 'bg-surface-2 text-text-secondary hover:text-white'
           }`}
         >
           Conflitos ({totalConflicts})
         </button>
         <button
           onClick={fetchData}
-          className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-[#1a1a24] text-[#94a3b8] hover:text-white transition-colors"
+          className="ml-auto px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-2 text-text-secondary hover:text-white transition-colors"
         >
           Atualizar
         </button>
@@ -168,14 +168,14 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
         if (filter !== 'all' && filteredScenarios.length === 0) return null;
 
         return (
-          <div key={section.id} className="bg-[#1a1a24] border border-[#242430] rounded-lg overflow-hidden">
+          <div key={section.id} className="bg-surface-2 border border-surface-3 rounded-lg overflow-hidden">
             <button
               onClick={() => setExpandedSection(isExpanded ? null : section.id)}
-              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[#242430] transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-surface-3 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-[#f1f5f9]">{section.title}</span>
-                <span className="text-xs text-[#64748b]">{section.coverage}% cobertura</span>
+                <span className="text-sm font-medium text-text-primary">{section.title}</span>
+                <span className="text-xs text-text-muted">{section.coverage}% cobertura</span>
                 {section.gaps.length > 0 && (
                   <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-900/50 text-red-300">
                     {section.gaps.length} gap(s)
@@ -187,21 +187,21 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                   </span>
                 )}
               </div>
-              <span className={`text-[#64748b] text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+              <span className={`text-text-muted text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
             </button>
 
             {isExpanded && filteredScenarios.length > 0 && (
-              <div className="border-t border-[#242430] overflow-x-auto">
+              <div className="border-t border-surface-3 overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-[#242430]">
-                      <th className="text-left px-4 py-2 text-xs font-medium text-[#64748b] min-w-[200px]">Cenário</th>
+                    <tr className="border-b border-surface-3">
+                      <th className="text-left px-4 py-2 text-xs font-medium text-text-muted min-w-[200px]">Cenário</th>
                       {data.participants.map(p => (
-                        <th key={p.userId} className="text-center px-2 py-2 text-xs font-medium text-[#64748b] min-w-[80px]">
+                        <th key={p.userId} className="text-center px-2 py-2 text-xs font-medium text-text-muted min-w-[80px]">
                           {p.userName.split(' ')[0]}
                         </th>
                       ))}
-                      <th className="text-center px-2 py-2 text-xs font-medium text-[#64748b]">Status</th>
+                      <th className="text-center px-2 py-2 text-xs font-medium text-text-muted">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -209,12 +209,12 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                       const isGap = section.gaps.includes(scenario.id);
                       const isConflict = section.conflicts.includes(scenario.id);
                       return (
-                        <tr key={scenario.id} className={`border-b border-[#242430] last:border-0 ${
+                        <tr key={scenario.id} className={`border-b border-surface-3 last:border-0 ${
                           isGap ? 'bg-red-950/10' : isConflict ? 'bg-orange-950/10' : ''
                         }`}>
                           <td className="px-4 py-2">
                             <div className="flex items-center gap-2">
-                              <span className="text-[#f1f5f9] text-xs">{scenario.title}</span>
+                              <span className="text-text-primary text-xs">{scenario.title}</span>
                               {scenario.persona && (
                                 <span className="px-1 py-0.5 rounded text-[9px] font-medium bg-indigo-900/50 text-indigo-300">
                                   {scenario.persona}
@@ -229,7 +229,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
                                 <div
                                   className="w-6 h-6 rounded mx-auto flex items-center justify-center text-xs"
                                   style={{
-                                    backgroundColor: status === 'not_started' ? '#242430' : `${statusColors[status]}20`,
+                                    backgroundColor: status === 'not_started' ? 'var(--color-surface-3)' : `${statusColors[status]}20`,
                                     color: statusColors[status],
                                   }}
                                   title={`${p.userName}: ${statusLabels[status] || 'Não testado'}`}
@@ -266,7 +266,7 @@ export default function CoverageMatrix({ sessionId, autoRefresh = false }: Props
       })}
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-[#64748b] pt-2">
+      <div className="flex items-center gap-4 text-xs text-text-muted pt-2">
         <span className="font-medium">Legenda:</span>
         {Object.entries(statusLabels).map(([status, label]) => (
           <div key={status} className="flex items-center gap-1">

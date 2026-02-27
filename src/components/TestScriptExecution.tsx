@@ -98,7 +98,7 @@ export default function TestScriptExecution({ sessionId, scripts }: Props) {
   }
 
   if (scripts.length === 0) {
-    return <p className="text-[#64748b] text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>;
+    return <p className="text-text-muted text-sm py-4 text-center">Nenhum script de teste cadastrado.</p>;
   }
 
   return (
@@ -110,34 +110,34 @@ export default function TestScriptExecution({ sessionId, scripts }: Props) {
         const isExpanded = expandedScript === script.id;
 
         return (
-          <div key={script.id} className="rounded-lg bg-[#1a1a24] overflow-hidden">
+          <div key={script.id} className="rounded-lg bg-surface-2 overflow-hidden">
             {/* Script header */}
             <button
               onClick={() => handleExpandScript(script.id)}
-              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-[#242430] transition-colors"
+              className="w-full px-4 py-3 flex items-center justify-between text-left hover:bg-surface-3 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-[#f1f5f9]">{script.title}</p>
+                <p className="text-sm font-medium text-text-primary">{script.title}</p>
                 {script.description && (
-                  <p className="text-xs text-[#64748b] mt-0.5 truncate">{script.description}</p>
+                  <p className="text-xs text-text-muted mt-0.5 truncate">{script.description}</p>
                 )}
               </div>
               <div className="flex items-center gap-3 ml-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-20 bg-[#242430] rounded-full h-1.5">
+                  <div className="w-20 bg-surface-3 rounded-full h-1.5">
                     <div
                       className="h-1.5 rounded-full transition-all duration-300"
                       style={{
                         width: `${progress}%`,
-                        backgroundColor: progress === 100 ? '#22c55e' : '#6366f1',
+                        backgroundColor: progress === 100 ? 'var(--color-severity-enhancement)' : 'var(--color-primary-500)',
                       }}
                     />
                   </div>
-                  <span className="text-xs text-[#64748b] whitespace-nowrap">
+                  <span className="text-xs text-text-muted whitespace-nowrap">
                     {completedSteps}/{totalSteps}
                   </span>
                 </div>
-                <span className={`text-[#64748b] transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                <span className={`text-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                   &#9660;
                 </span>
               </div>
@@ -145,7 +145,7 @@ export default function TestScriptExecution({ sessionId, scripts }: Props) {
 
             {/* Steps */}
             {isExpanded && (
-              <div className="border-t border-[#242430]">
+              <div className="border-t border-surface-3">
                 {script.steps.map((step, idx) => {
                   const stepStatus = results[step.id];
                   const isLoading = loading[step.id];
@@ -153,18 +153,18 @@ export default function TestScriptExecution({ sessionId, scripts }: Props) {
                   return (
                     <div
                       key={step.id}
-                      className={`px-4 py-3 border-b border-[#242430] last:border-0 ${
-                        stepStatus ? 'bg-[#111118]' : ''
+                      className={`px-4 py-3 border-b border-surface-3 last:border-0 ${
+                        stepStatus ? 'bg-surface-1' : ''
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <span className="text-xs text-[#64748b] mt-0.5 w-6 flex-shrink-0 text-right">
+                        <span className="text-xs text-text-muted mt-0.5 w-6 flex-shrink-0 text-right">
                           {idx + 1}.
                         </span>
                         <div className="flex-1 min-w-0">
-                          <FormattedText text={step.instruction} className="text-sm text-[#f1f5f9]" />
+                          <FormattedText text={step.instruction} className="text-sm text-text-primary" />
                           {step.expectedResult && (
-                            <div className="text-xs text-[#64748b] mt-1">
+                            <div className="text-xs text-text-muted mt-1">
                               <span className="font-medium">Esperado: </span>
                               <FormattedText text={step.expectedResult} className="inline" />
                             </div>
@@ -192,7 +192,7 @@ export default function TestScriptExecution({ sessionId, scripts }: Props) {
                             {stepStatus === 'failed' && (
                               <a
                                 href={`/sessions/${sessionId}/bugs/new?stepId=${step.id}`}
-                                className="ml-2 px-2 py-1 bg-[#ef4444]/10 text-[#ef4444] rounded text-xs font-medium hover:bg-[#ef4444]/20 transition-colors"
+                                className="ml-2 px-2 py-1 bg-severity-blocker/10 text-severity-blocker rounded text-xs font-medium hover:bg-severity-blocker/20 transition-colors"
                               >
                                 Reportar Bug
                               </a>

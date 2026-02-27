@@ -196,8 +196,8 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
 
   const scoreColor = quality.score >= 70 ? '#22c55e' : quality.score >= 40 ? '#eab308' : '#ef4444';
 
-  const inputClass = 'w-full px-3 py-2 bg-[#1a1a24] border border-[#242430] rounded-lg text-[#f1f5f9] placeholder:text-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#6366f1] focus:border-transparent';
-  const labelClass = 'block text-sm font-medium text-[#f1f5f9] mb-1.5';
+  const inputClass = 'w-full px-3 py-2 bg-surface-2 border border-surface-3 rounded-lg text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent';
+  const labelClass = 'block text-sm font-medium text-text-primary mb-1.5';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -210,21 +210,21 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
               {scenarioContext.sectionTitle}
             </span>
           </div>
-          <p className="text-sm font-medium text-[#f1f5f9]">{scenarioContext.scenarioTitle}</p>
+          <p className="text-sm font-medium text-text-primary">{scenarioContext.scenarioTitle}</p>
           {scenarioContext.expectedResult && (
-            <p className="text-xs text-[#64748b] mt-1">Esperado: {scenarioContext.expectedResult}</p>
+            <p className="text-xs text-text-muted mt-1">Esperado: {scenarioContext.expectedResult}</p>
           )}
         </div>
       )}
 
       {/* Quality Score Bar — hidden from participants */}
       {showQuality && (
-        <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-4">
+        <div className="bg-surface-2 border border-surface-3 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-[#64748b]">Qualidade do Reporte</span>
+            <span className="text-xs font-medium text-text-muted">Qualidade do Reporte</span>
             <span className="text-sm font-bold" style={{ color: scoreColor }}>{quality.score}/100</span>
           </div>
-          <div className="w-full bg-[#242430] rounded-full h-2">
+          <div className="w-full bg-surface-3 rounded-full h-2">
             <div
               className="h-2 rounded-full transition-all duration-300"
               style={{ width: `${quality.score}%`, backgroundColor: scoreColor }}
@@ -233,7 +233,7 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
           {quality.warnings.length > 0 && (
             <div className="mt-2 space-y-1">
               {quality.warnings.map((w, i) => (
-                <p key={i} className="text-xs text-[#eab308]">{w}</p>
+                <p key={i} className="text-xs text-severity-minor">{w}</p>
               ))}
             </div>
           )}
@@ -253,17 +253,17 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
         />
         {/* Duplicate detection */}
         {duplicates.length > 0 && (
-          <div className="mt-2 bg-[#1a1a24] border border-[#eab308]/30 rounded-lg p-3">
-            <p className="text-xs font-medium text-[#eab308] mb-2">Possíveis duplicatas:</p>
+          <div className="mt-2 bg-surface-2 border border-severity-minor/30 rounded-lg p-3">
+            <p className="text-xs font-medium text-severity-minor mb-2">Possíveis duplicatas:</p>
             {duplicates.map(d => (
               <a
                 key={d.id}
                 href={`/sessions/${sessionId}/bugs/${d.id}`}
                 target="_blank"
                 rel="noopener"
-                className="flex items-center justify-between py-1.5 text-xs hover:bg-[#242430] rounded px-2 -mx-1"
+                className="flex items-center justify-between py-1.5 text-xs hover:bg-surface-3 rounded px-2 -mx-1"
               >
-                <span className="text-[#94a3b8] truncate flex-1">{d.title}</span>
+                <span className="text-text-secondary truncate flex-1">{d.title}</span>
                 <span
                   className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] font-medium"
                   style={{ backgroundColor: `${severityColors[d.severity]}20`, color: severityColors[d.severity] }}
@@ -313,7 +313,7 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
                 className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
                   severity === s
                     ? 'border-current scale-105'
-                    : 'border-[#242430] opacity-60 hover:opacity-80'
+                    : 'border-surface-3 opacity-60 hover:opacity-80'
                 }`}
                 style={{ color: severityColors[s], backgroundColor: `${severityColors[s]}15` }}
               >
@@ -340,9 +340,9 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={() => fileInputRef.current?.click()}
-          className="border-2 border-dashed border-[#242430] rounded-lg p-6 text-center cursor-pointer hover:border-[#6366f1]/50 transition-colors"
+          className="border-2 border-dashed border-surface-3 rounded-lg p-6 text-center cursor-pointer hover:border-primary-500/50 transition-colors"
         >
-          <p className="text-sm text-[#64748b]">
+          <p className="text-sm text-text-muted">
             Arraste imagens aqui, cole do clipboard (Ctrl+V) ou clique para selecionar
           </p>
           <input
@@ -362,11 +362,11 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
           <div className="flex flex-wrap gap-3 mt-3">
             {evidencePreviews.map((preview, i) => (
               <div key={i} className="relative group">
-                <img src={preview} alt="Evidência" className="w-24 h-24 object-cover rounded-lg border border-[#242430]" />
+                <img src={preview} alt="Evidência" className="w-24 h-24 object-cover rounded-lg border border-surface-3" />
                 <button
                   type="button"
                   onClick={() => removeFile(i)}
-                  className="absolute -top-2 -right-2 w-5 h-5 bg-[#ef4444] rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -top-2 -right-2 w-5 h-5 bg-severity-blocker rounded-full text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   x
                 </button>
@@ -394,11 +394,11 @@ export default function BugReportForm({ sessionId, testSteps, reportMode = 'free
         <button
           type="submit"
           disabled={submitting || !title.trim()}
-          className="inline-flex items-center px-4 py-2 bg-[#4f46e5] hover:bg-[#4338ca] disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
+          className="inline-flex items-center px-4 py-2 bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg transition-colors"
         >
           {submitting ? 'Enviando...' : 'Reportar Bug'}
         </button>
-        <a href={`/sessions/${sessionId}`} className="text-sm text-[#94a3b8] hover:text-[#f1f5f9] transition-colors">
+        <a href={`/sessions/${sessionId}`} className="text-sm text-text-secondary hover:text-text-primary transition-colors">
           Cancelar
         </a>
       </div>

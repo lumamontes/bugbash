@@ -162,7 +162,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeMode === 'guided'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-[#1a1a24] text-[#94a3b8] hover:text-white'
+                : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
             Roteiro Guiado
@@ -172,7 +172,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeMode === 'free'
                 ? 'bg-indigo-600 text-white'
-                : 'bg-[#1a1a24] text-[#94a3b8] hover:text-white'
+                : 'bg-surface-2 text-text-secondary hover:text-white'
             }`}
           >
             Exploração Livre
@@ -192,26 +192,26 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                     onClick={() => setActiveSectionId(section.id)}
                     className={`w-full text-left p-3 rounded-lg transition-colors ${
                       isActive
-                        ? 'bg-[#242430] border border-indigo-500/50'
-                        : 'bg-[#1a1a24] hover:bg-[#242430] border border-transparent'
+                        ? 'bg-surface-3 border border-indigo-500/50'
+                        : 'bg-surface-2 hover:bg-surface-3 border border-transparent'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className={`text-sm font-medium truncate ${isActive ? 'text-[#f1f5f9]' : 'text-[#94a3b8]'}`}>
+                      <span className={`text-sm font-medium truncate ${isActive ? 'text-text-primary' : 'text-text-secondary'}`}>
                         {section.title}
                       </span>
-                      <span className="text-xs text-[#64748b] ml-2">{progress}%</span>
+                      <span className="text-xs text-text-muted ml-2">{progress}%</span>
                     </div>
-                    <div className="w-full bg-[#0d0d14] rounded-full h-1.5">
+                    <div className="w-full bg-surface-0 rounded-full h-1.5">
                       <div
                         className="h-1.5 rounded-full transition-all duration-300"
                         style={{
                           width: `${progress}%`,
-                          backgroundColor: progress === 100 ? '#22c55e' : '#6366f1',
+                          backgroundColor: progress === 100 ? 'var(--color-severity-enhancement)' : 'var(--color-primary-500)',
                         }}
                       />
                     </div>
-                    <span className="text-xs text-[#64748b] mt-1 block">
+                    <span className="text-xs text-text-muted mt-1 block">
                       {section.scenarios.length} cenário(s)
                     </span>
                   </button>
@@ -224,9 +224,9 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
               {activeSection ? (
                 <>
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-[#f1f5f9]">{activeSection.title}</h3>
+                    <h3 className="text-lg font-semibold text-text-primary">{activeSection.title}</h3>
                     {activeSection.description && (
-                      <FormattedText text={activeSection.description} className="text-sm text-[#64748b] mt-1" />
+                      <FormattedText text={activeSection.description} className="text-sm text-text-muted mt-1" />
                     )}
                   </div>
                   {activeSection.scenarios.map(scenario => {
@@ -243,7 +243,7 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                           exec?.status === 'fail' ? 'border-red-800/50 bg-red-950/20' :
                           exec?.status === 'partial' ? 'border-yellow-800/50 bg-yellow-950/20' :
                           exec?.status === 'blocked' ? 'border-orange-800/50 bg-orange-950/20' :
-                          'border-[#242430] bg-[#1a1a24]'
+                          'border-surface-3 bg-surface-2'
                         }`}
                       >
                         {/* Scenario Header */}
@@ -253,14 +253,14 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-[#f1f5f9]">{scenario.title}</span>
+                              <span className="text-sm font-medium text-text-primary">{scenario.title}</span>
                               {scenario.persona && (
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-900/50 text-indigo-300">
                                   {scenario.persona}
                                 </span>
                               )}
                               {othersCount > 0 && (
-                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[#242430] text-[#64748b]" title="Testado por outros participantes">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-3 text-text-muted" title="Testado por outros participantes">
                                   +{othersCount} testou
                                 </span>
                               )}
@@ -279,49 +279,49 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                               {statusConfig[exec.status as ExecutionStatus]?.icon}
                             </span>
                           )}
-                          <span className={`text-[#64748b] text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                          <span className={`text-text-muted text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                             ▼
                           </span>
                         </button>
 
                         {/* Expanded Details */}
                         {isExpanded && (
-                          <div className="px-4 pb-4 border-t border-[#242430] pt-3 space-y-3">
+                          <div className="px-4 pb-4 border-t border-surface-3 pt-3 space-y-3">
                             {scenario.precondition && (
                               <div>
-                                <p className="text-xs font-medium text-[#64748b] mb-1">Pré-condição</p>
-                                <FormattedText text={scenario.precondition} className="text-sm text-[#94a3b8] bg-[#0d0d14] p-2 rounded" />
+                                <p className="text-xs font-medium text-text-muted mb-1">Pré-condição</p>
+                                <FormattedText text={scenario.precondition} className="text-sm text-text-secondary bg-surface-0 p-2 rounded" />
                               </div>
                             )}
                             {scenario.stepsToExecute && (
                               <div>
-                                <p className="text-xs font-medium text-[#64748b] mb-1">Passos</p>
-                                <FormattedText text={scenario.stepsToExecute} className="text-sm text-[#94a3b8] bg-[#0d0d14] p-2 rounded" />
+                                <p className="text-xs font-medium text-text-muted mb-1">Passos</p>
+                                <FormattedText text={scenario.stepsToExecute} className="text-sm text-text-secondary bg-surface-0 p-2 rounded" />
                               </div>
                             )}
                             {scenario.expectedResult && (
                               <div>
-                                <p className="text-xs font-medium text-[#64748b] mb-1">Resultado Esperado</p>
-                                <FormattedText text={scenario.expectedResult} className="text-sm text-[#94a3b8] bg-[#0d0d14] p-2 rounded" />
+                                <p className="text-xs font-medium text-text-muted mb-1">Resultado Esperado</p>
+                                <FormattedText text={scenario.expectedResult} className="text-sm text-text-secondary bg-surface-0 p-2 rounded" />
                               </div>
                             )}
                             {scenario.keyRules && (
                               <div>
-                                <p className="text-xs font-medium text-[#64748b] mb-1">Regras-chave</p>
-                                <FormattedText text={scenario.keyRules} className="text-sm text-[#94a3b8] bg-[#0d0d14] p-2 rounded" />
+                                <p className="text-xs font-medium text-text-muted mb-1">Regras-chave</p>
+                                <FormattedText text={scenario.keyRules} className="text-sm text-text-secondary bg-surface-0 p-2 rounded" />
                               </div>
                             )}
 
                             {/* Comment field */}
                             <div>
-                              <label className="text-xs font-medium text-[#64748b] mb-1 block">Comentário</label>
+                              <label className="text-xs font-medium text-text-muted mb-1 block">Comentário</label>
                               <textarea
                                 id={`comment-${scenario.id}`}
                                 value={comments[scenario.id] || ''}
                                 onChange={e => setComments(prev => ({ ...prev, [scenario.id]: e.target.value }))}
                                 placeholder="Observações, detalhes do teste..."
                                 rows={2}
-                                className="w-full px-3 py-2 bg-[#0d0d14] border border-[#242430] rounded-lg text-sm text-[#f1f5f9] placeholder:text-[#64748b] focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
+                                className="w-full px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none"
                               />
                               {(exec?.status === 'partial' || exec?.status === 'blocked') && !comments[scenario.id]?.trim() && (
                                 <p className="text-xs text-orange-400 mt-1">Comentário obrigatório para status parcial/bloqueado</p>
@@ -365,16 +365,16 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
                   })}
                 </>
               ) : (
-                <p className="text-[#64748b] text-sm text-center py-8">Selecione uma seção para começar</p>
+                <p className="text-text-muted text-sm text-center py-8">Selecione uma seção para começar</p>
               )}
             </div>
           </div>
         ) : (
           /* Free Exploration Mode */
           <div className="space-y-4">
-            <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-6 text-center">
-              <h3 className="text-lg font-semibold text-[#f1f5f9] mb-2">Exploração Livre</h3>
-              <p className="text-sm text-[#64748b] mb-6">
+            <div className="bg-surface-2 border border-surface-3 rounded-lg p-6 text-center">
+              <h3 className="text-lg font-semibold text-text-primary mb-2">Exploração Livre</h3>
+              <p className="text-sm text-text-muted mb-6">
                 Explore o sistema livremente. Use os botões abaixo para reportar o que encontrar.
               </p>
               <div className="flex items-center justify-center gap-4">
@@ -404,24 +404,24 @@ export default function SessionExecution({ sessionId, userId, sections, mode: in
 
             {/* Quick overview of guided progress */}
             {activeSections.length > 0 && (
-              <div className="bg-[#1a1a24] border border-[#242430] rounded-lg p-4">
-                <p className="text-xs font-medium text-[#64748b] mb-3">Progresso do Roteiro</p>
+              <div className="bg-surface-2 border border-surface-3 rounded-lg p-4">
+                <p className="text-xs font-medium text-text-muted mb-3">Progresso do Roteiro</p>
                 <div className="space-y-2">
                   {activeSections.map(section => {
                     const progress = getSectionProgress(section);
                     return (
                       <div key={section.id} className="flex items-center gap-3">
-                        <span className="text-xs text-[#94a3b8] truncate flex-1">{section.title}</span>
-                        <div className="w-24 bg-[#0d0d14] rounded-full h-1.5">
+                        <span className="text-xs text-text-secondary truncate flex-1">{section.title}</span>
+                        <div className="w-24 bg-surface-0 rounded-full h-1.5">
                           <div
                             className="h-1.5 rounded-full transition-all"
                             style={{
                               width: `${progress}%`,
-                              backgroundColor: progress === 100 ? '#22c55e' : '#6366f1',
+                              backgroundColor: progress === 100 ? 'var(--color-severity-enhancement)' : 'var(--color-primary-500)',
                             }}
                           />
                         </div>
-                        <span className="text-xs text-[#64748b] w-8 text-right">{progress}%</span>
+                        <span className="text-xs text-text-muted w-8 text-right">{progress}%</span>
                       </div>
                     );
                   })}

@@ -38,8 +38,8 @@ interface Props {
 }
 
 const tooltipStyle = {
-  contentStyle: { backgroundColor: '#1a1a24', border: '1px solid #242430', borderRadius: '8px', fontSize: '12px' },
-  itemStyle: { color: '#f1f5f9' },
+  contentStyle: { backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-surface-3)', borderRadius: '8px', fontSize: '12px' },
+  itemStyle: { color: 'var(--color-text-primary)' },
 };
 
 export default function AnalyticsCharts({
@@ -49,38 +49,38 @@ export default function AnalyticsCharts({
     <div className="space-y-6">
       {/* Row 1: Bugs per session + Severity stacked bar */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Bugs por Sessão</h3>
+        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-4">Bugs por Sessão</h3>
           {sessionTrend.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-12">Sem dados</p>
+            <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <LineChart data={sessionTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#242430" />
-                <XAxis dataKey="title" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-surface-3)" />
+                <XAxis dataKey="title" tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip {...tooltipStyle} />
-                <Line type="monotone" dataKey="bugs" stroke="#6366f1" strokeWidth={2} dot={{ fill: '#6366f1', r: 4 }} name="Bugs" />
+                <Line type="monotone" dataKey="bugs" stroke="var(--color-primary-500)" strokeWidth={2} dot={{ fill: 'var(--color-primary-500)', r: 4 }} name="Bugs" />
               </LineChart>
             </ResponsiveContainer>
           )}
         </div>
 
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Severidade por Sessão</h3>
+        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-4">Severidade por Sessão</h3>
           {severityTrend.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-12">Sem dados</p>
+            <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={severityTrend}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#242430" />
-                <XAxis dataKey="title" tick={{ fill: '#64748b', fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-surface-3)" />
+                <XAxis dataKey="title" tick={{ fill: 'var(--color-text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip {...tooltipStyle} />
-                <Bar dataKey="blocker" stackId="a" fill="#ef4444" name="Bloqueante" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="major" stackId="a" fill="#f97316" name="Grave" />
-                <Bar dataKey="minor" stackId="a" fill="#eab308" name="Menor" />
-                <Bar dataKey="enhancement" stackId="a" fill="#22c55e" name="Melhoria" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="blocker" stackId="a" fill="var(--color-severity-blocker)" name="Bloqueante" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="major" stackId="a" fill="var(--color-severity-major)" name="Grave" />
+                <Bar dataKey="minor" stackId="a" fill="var(--color-severity-minor)" name="Menor" />
+                <Bar dataKey="enhancement" stackId="a" fill="var(--color-severity-enhancement)" name="Melhoria" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -89,10 +89,10 @@ export default function AnalyticsCharts({
 
       {/* Row 2: Source breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Widget vs Plataforma</h3>
+        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-4">Widget vs Plataforma</h3>
           {sourceData.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-12">Sem dados</p>
+            <p className="text-text-muted text-sm text-center py-12">Sem dados</p>
           ) : (
             <div>
               <ResponsiveContainer width="100%" height={140}>
@@ -107,7 +107,7 @@ export default function AnalyticsCharts({
                 {sourceData.map(d => (
                   <div key={d.name} className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: d.color }} />
-                    <span className="text-xs text-[#94a3b8]">{d.name} ({d.value})</span>
+                    <span className="text-xs text-text-secondary">{d.name} ({d.value})</span>
                   </div>
                 ))}
               </div>
@@ -118,29 +118,29 @@ export default function AnalyticsCharts({
 
       {/* Row 3: Top reporters + Resolution funnel */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Top Participantes</h3>
+        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-4">Top Participantes</h3>
           {topReporters.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-8">Sem dados</p>
+            <p className="text-text-muted text-sm text-center py-8">Sem dados</p>
           ) : (
             <div className="space-y-3">
               {topReporters.map((r, i) => (
                 <div key={r.name} className="flex items-center gap-3">
                   <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    i === 0 ? 'bg-[#eab308]/20 text-[#eab308]' :
-                    i === 1 ? 'bg-[#94a3b8]/20 text-[#94a3b8]' :
+                    i === 0 ? 'bg-severity-minor/20 text-severity-minor' :
+                    i === 1 ? 'bg-text-secondary/20 text-text-secondary' :
                     i === 2 ? 'bg-[#cd7f32]/20 text-[#cd7f32]' :
-                    'bg-[#242430] text-[#64748b]'
+                    'bg-surface-3 text-text-muted'
                   }`}>
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-[#f1f5f9] truncate">{r.name}</p>
+                    <p className="text-sm text-text-primary truncate">{r.name}</p>
                   </div>
-                  <span className="text-sm font-bold text-[#f1f5f9]">{r.bugs}</span>
-                  <span className="text-xs text-[#64748b]">bugs</span>
+                  <span className="text-sm font-bold text-text-primary">{r.bugs}</span>
+                  <span className="text-xs text-text-muted">bugs</span>
                   {r.avgQuality > 0 && (
-                    <span className="text-xs px-1.5 py-0.5 rounded bg-[#22c55e]/10 text-[#22c55e]">{r.avgQuality.toFixed(0)}q</span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-severity-enhancement/10 text-severity-enhancement">{r.avgQuality.toFixed(0)}q</span>
                   )}
                 </div>
               ))}
@@ -148,10 +148,10 @@ export default function AnalyticsCharts({
           )}
         </div>
 
-        <div className="bg-[#111118] border border-[#242430] rounded-xl p-6">
-          <h3 className="text-sm font-semibold text-[#f1f5f9] mb-4">Funil de Resolução</h3>
+        <div className="bg-surface-1 border border-surface-3 rounded-xl p-6">
+          <h3 className="text-sm font-semibold text-text-primary mb-4">Funil de Resolução</h3>
           {resolutionData.length === 0 ? (
-            <p className="text-[#64748b] text-sm text-center py-8">Sem dados</p>
+            <p className="text-text-muted text-sm text-center py-8">Sem dados</p>
           ) : (
             <div className="space-y-3">
               {resolutionData.map(d => {
@@ -160,10 +160,10 @@ export default function AnalyticsCharts({
                 return (
                   <div key={d.name}>
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-[#94a3b8]">{d.name}</span>
-                      <span className="text-xs font-bold text-[#f1f5f9]">{d.value}</span>
+                      <span className="text-xs text-text-secondary">{d.name}</span>
+                      <span className="text-xs font-bold text-text-primary">{d.value}</span>
                     </div>
-                    <div className="w-full bg-[#242430] rounded-full h-2">
+                    <div className="w-full bg-surface-3 rounded-full h-2">
                       <div className="h-2 rounded-full" style={{ width: `${pct}%`, backgroundColor: d.color }} />
                     </div>
                   </div>
