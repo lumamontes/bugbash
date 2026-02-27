@@ -5,6 +5,7 @@ import SessionTimer from '@components/SessionTimer';
 import SessionExecution from '@components/SessionExecution';
 import TestScriptExecution from '@components/TestScriptExecution';
 import LiveBugFeed from '@components/LiveBugFeed';
+import SessionNotifier from '@components/SessionNotifier';
 import BugListCard from './BugListCard.astro';
 import TestResourcesCard from './TestResourcesCard.astro';
 import { sessionStatusLabel, formatDateTime } from '@lib/format';
@@ -64,11 +65,12 @@ const hasNewTestingJourney = sectionsList.length > 0;
         <div class="text-4xl mb-4">&#9203;</div>
         <h2 class="text-lg font-semibold text-text-primary mb-2">Sessão ainda não iniciada</h2>
         <p class="text-text-secondary text-sm max-w-md mx-auto">
-          Aguarde o facilitador iniciar a sessão. Você será notificado quando começar.
+          Aguarde o facilitador iniciar a sessão.
         </p>
         {session.scheduledAt && (
           <p class="text-text-muted text-sm mt-4">Agendada para {formatDateTime(session.scheduledAt)}</p>
         )}
+        <SessionNotifier sessionId={session.id} sessionTitle={session.title} client:load />
       </div>
     </Card>
   )}
