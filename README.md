@@ -1,46 +1,114 @@
-# Astro Starter Kit: Basics
+# Bug Bash
 
-```sh
-pnpm create astro@latest -- --template basics
+Plataforma de sessões de teste colaborativo gamificado. Organize bug bashes com sua equipe, reporte bugs em tempo real, acompanhe métricas de qualidade e conquiste badges.
+
+## Features
+
+- **Sessões de teste** — Crie e gerencie sessões de bug bash com fases (kickoff, execução, encerramento) e timer em tempo real
+- **Reporte de bugs** — Formulário estruturado com severidade, evidências (screenshots), passos para reproduzir e quality score automático
+- **Roteiros de teste** — Organize cenários de teste em seções com pré-condições, passos e resultados esperados
+- **Gamificação** — Sistema de badges e conquistas para engajar participantes
+- **Feed em tempo real** — Atualizações via SSE para acompanhar bugs reportados ao vivo
+- **Integrações** — Exportação de bugs para Linear, upload de evidências via Supabase Storage, formatação assistida por IA (Anthropic)
+- **Multi-organização** — Suporte a organizações, squads e roles (admin, facilitador, participante)
+- **Widget embarcável** — Componente standalone para reportar bugs diretamente do produto sendo testado
+
+## Tech Stack
+
+| Camada | Tecnologia |
+|--------|-----------|
+| Framework | [Astro 5](https://astro.build) (SSR via `@astrojs/node`) |
+| UI | [React 19](https://react.dev) + [Tailwind CSS v4](https://tailwindcss.com) |
+| Design Tokens | [Iris](https://github.com/arcotech-services/iris-tokens) |
+| Banco de dados | PostgreSQL + [Drizzle ORM](https://orm.drizzle.team) |
+| Storage | Supabase Storage / R2 |
+| Gerenciador | pnpm |
+
+## Pré-requisitos
+
+- Node.js 20+
+- pnpm
+- PostgreSQL (local ou Supabase)
+
+## Quick Start
+
+```bash
+# Clone o repositório
+git clone <repo-url>
+cd bugbash
+
+# Copie as variáveis de ambiente
+cp .env.example .env
+# Edite .env com sua DATABASE_URL e demais configurações
+
+# Instale as dependências
+pnpm install
+
+# Aplique as migrations
+pnpm db:migrate
+
+# (Opcional) Popule com dados de demonstração
+pnpm db:seed
+
+# Inicie o servidor de desenvolvimento
+pnpm dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+O servidor estará disponível em `http://localhost:4321`.
 
-## 🚀 Project Structure
+No primeiro acesso, a aplicação redireciona para `/setup` onde você cria o usuário admin, a organização e os squads padrão.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Variáveis de Ambiente
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
+| Variável | Obrigatória | Descrição |
+|----------|-------------|-----------|
+| `DATABASE_URL` | Sim | Connection string do PostgreSQL |
+| `AUTH_TOKEN` | Sim | Token do GitHub Packages para `@arcotech-services/iris-tokens` |
+| `LINEAR_API_KEY` | Não | API key do Linear para exportação de bugs |
+| `LINEAR_TEAM_ID` | Não | ID do time no Linear |
+| `ANTHROPIC_API_KEY` | Não | API key da Anthropic para formatação com IA |
+| `AI_ENABLED` | Não | Habilitar features de IA (`true`/`false`) |
+| `R2_ACCOUNT_ID` | Não | Cloudflare R2 para upload de evidências |
+| `R2_ACCESS_KEY_ID` | Não | Credencial R2 |
+| `R2_SECRET_ACCESS_KEY` | Não | Credencial R2 |
+| `R2_BUCKET_NAME` | Não | Nome do bucket R2 |
+| `R2_PUBLIC_URL` | Não | URL pública do bucket R2 |
+
+## Comandos
+
+| Comando | Descrição |
+|---------|-----------|
+| `pnpm dev` | Inicia o servidor de desenvolvimento em `localhost:4321` |
+| `pnpm build` | Build de produção para `./dist/` |
+| `pnpm preview` | Preview do build de produção |
+| `pnpm start` | Inicia o servidor de produção (`node dist/server/entry.mjs`) |
+| `pnpm astro check` | Verificação de tipos TypeScript |
+| `pnpm db:generate` | Gera SQL de migration a partir de mudanças no schema |
+| `pnpm db:migrate` | Aplica migrations pendentes no banco |
+| `pnpm db:seed` | Popula o banco com dados de demonstração (reseta dados existentes) |
+| `pnpm db:studio` | Abre o Drizzle Studio para inspeção do banco |
+
+## Deploy
+
+Para produção:
+
+```bash
+pnpm build
+pnpm db:migrate
+pnpm start
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+A aplicação roda como servidor Node.js standalone (output: `server`). Compatível com plataformas como Railway, Fly.io, ou qualquer host que suporte Node.js.
 
-## 🧞 Commands
+## Usuários Demo
 
-All commands are run from the root of the project, from a terminal:
+Após rodar `pnpm db:seed`, você pode fazer login com:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
+- **Admin**: `admin@arcotech.com.br`
+- **Testadora**: `ana.carolina@arcotech.com.br`
 
-## 👀 Want to learn more?
+O login é feito apenas por email (sem senha).
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Licença
+
+Proprietário — uso interno.
