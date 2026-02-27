@@ -40,10 +40,8 @@ interface Props {
 
 const statusConfig = {
   pass: { label: 'Passou', color: '#22c55e', icon: '✓' },
-  partial: { label: 'Parcial', color: '#eab308', icon: '◐' },
   fail: { label: 'Falhou', color: '#ef4444', icon: '✗' },
-  blocked: { label: 'Bloqueado', color: '#f97316', icon: '⊘' },
-  skipped: { label: 'Ignorar', color: '#64748b', icon: '⏭' },
+  partial: { label: 'Parcial', color: '#eab308', icon: '◐' },
 } as const;
 
 type ExecutionStatus = keyof typeof statusConfig;
@@ -134,7 +132,7 @@ export default function SessionExecution({ sections, mode: initialMode = 'guided
   const handleExecute = useCallback(async (scenarioId: string, status: ExecutionStatus) => {
     const comment = comments[scenarioId] || '';
 
-    if ((status === 'partial' || status === 'blocked') && !comment.trim()) {
+    if ((status === 'partial') && !comment.trim()) {
       // Expand the scenario to show the comment field
       setExpandedScenario(scenarioId);
       setTimeout(() => {
@@ -174,7 +172,7 @@ export default function SessionExecution({ sections, mode: initialMode = 'guided
     }
 
     // Auto-advance: find next untested scenario
-    if (status !== 'partial' && status !== 'blocked') {
+    if (status !== 'partial') {
       const next = findNextUntested(scenarioId);
       if (next) {
         // Open the section if not already open
@@ -462,7 +460,7 @@ export default function SessionExecution({ sections, mode: initialMode = 'guided
                                     className="w-full px-3 py-2 bg-surface-0 border border-surface-3 rounded-lg text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary-500 resize-none"
                                   />
                                   {needsComment && !comments[scenario.id]?.trim() && (
-                                    <p className="text-xs text-severity-major mt-0.5">Comentário obrigatório para status parcial/bloqueado</p>
+                                    <p className="text-xs text-severity-major mt-0.5">Comentário obrigatório para status parcial</p>
                                   )}
                                 </div>
                               )}
