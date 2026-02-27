@@ -36,6 +36,28 @@ const isExecutionPhase = session.status === 'execution';
 const isWrapupPhase = session.status === 'wrapup';
 const isClosed = session.status === 'closed';
 const hasNewTestingJourney = sectionsList.length > 0;
+
+// Strip Date objects and non-essential fields to avoid React 19 hydration issues
+const cleanSections = sectionsList.map((s: any) => ({
+  id: s.id,
+  title: s.title,
+  description: s.description ?? null,
+  status: s.status,
+  notReadyReason: s.notReadyReason ?? null,
+  sortOrder: s.sortOrder,
+  scriptTitle: s.scriptTitle,
+  scenarios: (s.scenarios ?? []).map((sc: any) => ({
+    id: sc.id,
+    title: sc.title,
+    precondition: sc.precondition ?? null,
+    stepsToExecute: sc.stepsToExecute ?? null,
+    expectedResult: sc.expectedResult ?? null,
+    keyRules: sc.keyRules ?? null,
+    dependsOn: sc.dependsOn ?? null,
+    persona: sc.persona ?? null,
+    sortOrder: sc.sortOrder,
+  })),
+}));
 ---
 
 <div class="p-8">
@@ -78,7 +100,7 @@ const hasNewTestingJourney = sectionsList.length > 0;
             </div>
           </div>
           {hasNewTestingJourney ? (
-            <SessionExecution sections={sectionsList} client:load />
+            <SessionExecution sections={cleanSections} sessionId={session.id} client:load />
           ) : scriptsWithSteps.length > 0 ? (
             <TestScriptExecution scripts={scriptsWithSteps} client:load />
           ) : (

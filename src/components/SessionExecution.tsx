@@ -35,6 +35,7 @@ interface Execution {
 
 interface Props {
   sections: Section[];
+  sessionId?: string;
   mode?: 'guided' | 'free';
 }
 
@@ -46,9 +47,11 @@ const statusConfig = {
 
 type ExecutionStatus = keyof typeof statusConfig;
 
-export default function SessionExecution({ sections, mode: initialMode = 'guided' }: Props) {
-  const { id: sessionId } = useStore($session);
-  const { id: userId } = useStore($user);
+export default function SessionExecution({ sections, sessionId: propSessionId, mode: initialMode = 'guided' }: Props) {
+  const session = useStore($session);
+  const user = useStore($user);
+  const sessionId = propSessionId || session.id;
+  const userId = user.id;
   const [activeMode, setActiveMode] = useState<'guided' | 'free'>(initialMode);
   const [expandedScenario, setExpandedScenario] = useState<string | null>(null);
   const [executions, setExecutions] = useState<Record<string, Execution>>({});
@@ -60,17 +63,20 @@ export default function SessionExecution({ sections, mode: initialMode = 'guided
   const activeSections = sections.filter(s => s.status === 'active');
 
   // Auto-open first section with untested scenarios on load
+  const hasActiveSections = activeSections.length > 0;
+  const executionsCount = Object.keys(executions).length;
   useEffect(() => {
     if (expandedSections.size > 0) return;
+    if (!hasActiveSections) return;
     const firstUntested = activeSections.find(s =>
       s.scenarios.some(sc => !executions[sc.id]?.status || executions[sc.id].status === 'not_started')
     );
     if (firstUntested) {
       setExpandedSections(new Set([firstUntested.id]));
-    } else if (activeSections.length > 0) {
+    } else {
       setExpandedSections(new Set([activeSections[0].id]));
     }
-  }, [activeSections.length > 0 && Object.keys(executions).length === 0]);
+  }, [hasActiveSections, executionsCount]);
 
   // Load existing executions
   useEffect(() => {
@@ -351,7 +357,7 @@ export default function SessionExecution({ sections, mode: initialMode = 'guided
                                 color: 'var(--color-text-muted)',
                               }}
                             >
-                              {currentStatus ? statusConfig[currentStatus].icon : '·'}
+                              {currentStatus ? statusConfig[currentStatus]?.icon ?? '·' : '·'}
                             </span>
 
                             {/* Title (clickable to expand) */}
